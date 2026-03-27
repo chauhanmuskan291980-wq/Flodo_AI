@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/screens/widgets/task.dart';
 import 'package:my_app/screens/widgets/go_premium.dart';
- 
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -46,11 +45,67 @@ class HomePage extends StatelessWidget {
               'Tasks',
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-             
           ),
-          Expanded(child: Tasks())
+          Expanded(child: Tasks()),
         ],
+      ),
+      bottomNavigationBar: _buildBottomNavigationBar(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: FloatingActionButton(
+        shape: RoundedRectangleBorder(
+          borderRadius:BorderRadius.circular(10) ),
+          elevation: 0,
+          backgroundColor: Colors.black,
+        onPressed: () {},
+        child: Icon(
+          Icons.add,
+          size:35,
+        ),),
+    );
+  }
+
+  Widget _buildBottomNavigationBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.2),
+            spreadRadius: 5,
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
+        ),
+        child: BottomNavigationBar(
+          backgroundColor: Colors.white,
+          elevation: 0, // shadow already handled by Container
+          selectedItemColor: Colors.blueAccent,
+          unselectedItemColor: Colors.grey.withOpacity(0.5),
+          showSelectedLabels: false,
+          showUnselectedLabels: false,
+          type: BottomNavigationBarType.fixed,
+          items: const [
+            BottomNavigationBarItem(
+              label: 'Home',
+              icon: Icon(Icons.home_rounded, size: 30),
+            ),
+            BottomNavigationBarItem(
+              label: 'Profile',
+              icon: Icon(Icons.person_rounded, size: 30),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
