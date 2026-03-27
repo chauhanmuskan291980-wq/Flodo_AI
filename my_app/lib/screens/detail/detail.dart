@@ -188,7 +188,19 @@ class _DetailPageState extends State<DetailPage> {
         color: Colors.white,
         iconSize: 20,
       ),
-      actions: const [Icon(Icons.more_vert, size: 30, color: Colors.white)],
+      actions: [
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert, color: Colors.white),
+          onSelected: (value) {
+            if (value == 'add') {
+              _showAddTaskDialog(context);
+            }
+          },
+          itemBuilder: (context) => [
+            const PopupMenuItem(value: 'add', child: Text('Add Task')),
+          ],
+        ),
+      ],
       flexibleSpace: FlexibleSpaceBar(
         title: Column(
           mainAxisAlignment: MainAxisAlignment.end,
@@ -209,6 +221,79 @@ class _DetailPageState extends State<DetailPage> {
           ],
         ),
       ),
+    );
+  }
+
+  void _showAddTaskDialog(BuildContext context) {
+    TextEditingController titleController = TextEditingController();
+    TextEditingController timeController = TextEditingController();
+    TextEditingController slotController = TextEditingController();
+
+    String selectedStatus = 'Pending';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Add New Task"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: "Title"),
+              ),
+              TextField(
+                controller: timeController,
+                decoration: const InputDecoration(
+                  labelText: "Time (e.g. 10:00 AM)",
+                ),
+              ),
+              TextField(
+                controller: slotController,
+                decoration: const InputDecoration(labelText: "Slot"),
+              ),
+
+              DropdownButtonFormField<String>(
+                value: selectedStatus,
+                items: ['Pending', 'In Progress', 'Done']
+                    .map(
+                      (status) =>
+                          DropdownMenuItem(value: status, child: Text(status)),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  selectedStatus = value!;
+                },
+                decoration: const InputDecoration(labelText: "Status"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  detailList.add({
+                    'time': timeController.text,
+                    'title': titleController.text,
+                    'slot': slotController.text,
+                    'status': selectedStatus,
+                    'tiColor': Colors.blue, // default color
+                    'bgColor': Colors.blue.shade50,
+                  });
+                });
+
+                Navigator.pop(context);
+              },
+              child: const Text("Add"),
+            ),
+          ],
+        );
+      },
     );
   }
 }
