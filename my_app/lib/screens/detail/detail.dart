@@ -276,15 +276,24 @@ class _DetailPageState extends State<DetailPage> {
             ),
             ElevatedButton(
               onPressed: () {
+                final newTask = {
+                  'time': timeController.text,
+                  'title': titleController.text,
+                  'slot': slotController.text,
+                  'status': selectedStatus,
+                  'tiColor': Colors.blue,
+                  'bgColor': Colors.blue.shade50,
+                };
+
+                int index = detailList.indexWhere(
+                  (e) => e['time'] == timeController.text,
+                );
                 setState(() {
-                  detailList.add({
-                    'time': timeController.text,
-                    'title': titleController.text,
-                    'slot': slotController.text,
-                    'status': selectedStatus,
-                    'tiColor': Colors.blue, // default color
-                    'bgColor': Colors.blue.shade50,
-                  });
+                  if (index != -1) {
+                    detailList[index] = newTask;
+                  } else {
+                    detailList.add(newTask);
+                  }
                 });
 
                 Navigator.pop(context);
