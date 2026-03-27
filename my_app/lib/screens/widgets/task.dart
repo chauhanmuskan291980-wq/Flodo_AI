@@ -53,6 +53,7 @@ class Tasks extends StatelessWidget {
       ),
     );
   }
+  
 
   // Widget for a single task card
   Widget _buildTask(BuildContext context, Task task) {
