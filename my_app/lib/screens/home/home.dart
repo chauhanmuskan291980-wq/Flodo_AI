@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:my_app/screens/widgets/task.dart';
 import 'package:my_app/screens/widgets/go_premium.dart';
+ 
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -21,36 +23,34 @@ class HomePage extends StatelessWidget {
                 child: Image.asset('assets/images/avatar.jpg'),
               ),
             ),
-            SizedBox(width: 10,),
-            Text('Hi , Muskan!',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 26,
-              fontWeight: FontWeight.bold
-            ),)
+            SizedBox(width: 10),
+            Text(
+              'Hi , Muskan!',
+              style: TextStyle(
+                color: Colors.black,
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ],
         ),
-        actions:[
-          Icon(
-            Icons.more_vert,
-            color: Colors.black,
-            size: 40,
-          )
-        ]
+        actions: [Icon(Icons.more_vert, color: Colors.black, size: 40)],
       ),
-      body:  Column(
+      body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           GoPremium()
+          GoPremium(),
+          Container(
+            padding: EdgeInsets.all(15),
+            child: Text(
+              'Tasks',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+             
+          ),
+          Expanded(child: Tasks())
         ],
-      )
+      ),
     );
   }
-
-
-
-  
 }
-
-
- 
