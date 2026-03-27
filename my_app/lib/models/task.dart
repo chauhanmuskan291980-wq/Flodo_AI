@@ -34,48 +34,55 @@ class Task {
         done: 1,
         desc: [
           {
-            'time':'9:00 am',
+            'time':'9:00 AM',
             'title':'Go for a walk with Dog',
-            'slot':'9:00 - 10:00 am',
+            'slot':'9:00 - 10:00 AM',
+            'status':'Pending',
             'tiColor':kRedDark,
             'bgColor': kRedLight
           },
           {
-            'time':'10:00 am',
+            'time':'10:00 AM',
             'title':'Shot on Dribble',
-            'slot':'10:00 - 11:00 am',
+            'slot':'10:00 - 11:00 AM',
+            'status':'Pending',
             'tiColor':kBlueDark,
             'bgColor': kBlueLight
           },
           {
-            'time':'11:00 am',
+            'time':'11:00 AM',
             'title':'',
             'slot':'',
+            'status':'Empty',
             'tiColor':Colors.grey.withOpacity(0.3),
           },
           {
-            'time':'12:00 am',
+            'time':'12:00 AM',
             'title':'',
             'slot':'',
+            'status':'Empty',
             'tiColor':Colors.grey.withOpacity(0.3),
           },
           {
-            'time':'1:00 pm',
+            'time':'1:00 PM',
             'title':'Coding in Flutter',
-            'slot':'11:00 - 12:00 am',
+            'slot':'11:00 - 12:00 AM',
+            'status':'Pending',
             'tiColor':kYellowDark,
             'bgColor': kYellowLight
           },
           {
-            'time':'2:00 pm',
+            'time':'2:00 PM',
             'title':'',
             'slot':'',
+            'status':'Empty',
             'tiColor':Colors.grey.withOpacity(0.3),
           },
           {
-            'time':'3:00 pm',
+            'time':'3:00 PM',
             'title':'',
             'slot':'',
+            'status':'Empty',
             'tiColor':Colors.grey.withOpacity(0.3),
           },
         ]

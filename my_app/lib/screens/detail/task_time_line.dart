@@ -30,7 +30,7 @@ class TaskTimeLine extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(detail['time'] ?? ''),
-                detail['title'].isNotEmpty
+                (detail['title'] ?? '').isNotEmpty
                     ? _buildCard(
                         detail['bgColor'] ??
                             const Color.fromARGB(255, 255, 255, 255),
@@ -71,50 +71,84 @@ class TaskTimeLine extends StatelessWidget {
     );
   }
 
-  Widget _buildCard(Color bgColor, String title, String slot) {
-    return Container(
-      width: 250,
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: const BorderRadius.only(
-          topRight: Radius.circular(10),
-          bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-        ),
-      ),
-      padding: const EdgeInsets.all(15),
-      margin: const EdgeInsets.all(5),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // 🔥 Top Row (Title + Buttons)
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-
-              if ((detail['title'] ?? '').isNotEmpty) ...[
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 18),
-                  onPressed: onEdit,
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                  onPressed: onDelete,
-                ),
-              ],
-            ],
-          ),
-
-          const SizedBox(height: 10),
-          Text(slot, style: const TextStyle(color: Colors.grey)),
-        ],
-      ),
-    );
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'Done':
+        return Colors.green;
+      case 'In Progress':
+        return Colors.orange;
+      case 'Pending':
+        return Colors.red;
+      case 'Empty':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
   }
+
+Widget _buildCard(Color bgColor, String title, String slot) {
+  return Container(
+    width: 250,
+    decoration: BoxDecoration(
+      color: bgColor,
+      borderRadius: const BorderRadius.only(
+        topRight: Radius.circular(10),
+        bottomLeft: Radius.circular(10),
+        bottomRight: Radius.circular(10),
+      ),
+    ),
+    padding: const EdgeInsets.all(15),
+    margin: const EdgeInsets.all(5),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 🔥 Top Row (Title + Buttons)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ),
+
+            if ((detail['title'] ?? '').isNotEmpty) ...[
+              IconButton(
+                icon: const Icon(Icons.edit, size: 18),
+                onPressed: onEdit,
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                onPressed: onDelete,
+              ),
+            ],
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        Text(slot, style: const TextStyle(color: Colors.grey)),
+
+        const SizedBox(height: 10),
+
+        // ✅ STATUS (separate line)
+        if ((detail['status'] ?? 'Empty') != 'Empty')
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: _getStatusColor(detail['status'] ?? 'Empty'),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              detail['status'],
+              style: const TextStyle(color: Colors.white, fontSize: 12),
+            ),
+          ),
+      ],
+    ),
+  );
+}
+
+
 }

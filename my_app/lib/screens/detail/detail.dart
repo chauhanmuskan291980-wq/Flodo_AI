@@ -42,10 +42,7 @@ class _DetailPageState extends State<DetailPage> {
               ),
               child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  DatePicker(),
-                  TaskTitle(),
-                ],
+                children: [DatePicker(), TaskTitle()],
               ),
             ),
           ),
@@ -58,10 +55,7 @@ class _DetailPageState extends State<DetailPage> {
                     child: const Center(
                       child: Text(
                         'No Task today',
-                        style: TextStyle(
-                          color: Colors.grey,
-                          fontSize: 14,
-                        ),
+                        style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ),
                   ),
@@ -71,16 +65,16 @@ class _DetailPageState extends State<DetailPage> {
                     (context, index) => TaskTimeLine(
                       detailList[index],
 
-                      // ✅ DELETE FUNCTION
+                      // Delete
                       onDelete: () {
                         setState(() {
                           detailList.removeAt(index);
                         });
                       },
 
-                      // ✏️ EDIT (for future)
+                      // Edit
                       onEdit: () {
-                        print("Edit task at index $index");
+                        _showEditDialog(context, index);
                       },
                     ),
                     childCount: detailList.length,
@@ -91,8 +85,100 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
+  void _showEditDialog(BuildContext context, int index) {
+    final item = detailList[index];
+
+    TextEditingController timeController = TextEditingController(
+      text: item['time'],
+    );
+
+    TextEditingController titleController = TextEditingController(
+      text: item['title'],
+    );
+
+    TextEditingController slotController = TextEditingController(
+      text: item['slot'],
+    );
+
+    String selectedStatus = item['status'] ?? 'Pending';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Edit Task"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              //  Time
+              TextField(
+                controller: timeController,
+                decoration: const InputDecoration(labelText: "Time"),
+              ),
+
+              //  Title / Status
+              TextField(
+                controller: titleController,
+                decoration: const InputDecoration(labelText: "Title"),
+              ),
+
+              //  Slot / Status detail
+              TextField(
+                controller: slotController,
+                decoration: const InputDecoration(labelText: "Slot"),
+              ),
+              DropdownButtonFormField<String>(
+                value: selectedStatus,
+                items: ['Pending', 'In Progress', 'Done']
+                    .map(
+                      (status) =>
+                          DropdownMenuItem(value: status, child: Text(status)),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  selectedStatus = value!;
+                },
+                decoration: const InputDecoration(labelText: "Status"),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Cancel"),
+            ),
+
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  detailList[index]['time'] = timeController.text;
+                  detailList[index]['title'] = titleController.text;
+                  detailList[index]['slot'] = slotController.text;
+                  detailList[index]['status'] = selectedStatus;
+                });
+
+                Navigator.pop(context);
+              },
+              child: const Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   // 🔹 AppBar
   Widget _buildAppBar(BuildContext context) {
+    int totalTasks = detailList
+        .where((e) => (e['title'] ?? '').isNotEmpty)
+        .length;
+
+    int doneTasks = detailList
+        .where((e) => (e['status'] ?? '') == 'Done')
+        .length;
+
+    int remainingTasks = totalTasks - doneTasks;
+
     return SliverAppBar(
       expandedHeight: 90,
       backgroundColor: Colors.black,
@@ -102,16 +188,14 @@ class _DetailPageState extends State<DetailPage> {
         color: Colors.white,
         iconSize: 20,
       ),
-      actions: const [
-        Icon(Icons.more_vert, size: 30, color: Colors.white),
-      ],
+      actions: const [Icon(Icons.more_vert, size: 30, color: Colors.white)],
       flexibleSpace: FlexibleSpaceBar(
         title: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${widget.task.title} tasks',
+              '$remainingTasks tasks',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
@@ -119,11 +203,8 @@ class _DetailPageState extends State<DetailPage> {
             ),
             const SizedBox(height: 5),
             Text(
-              'You have ${widget.task.left} tasks for today!',
-              style: const TextStyle(
-                fontSize: 12,
-                color: Colors.grey,
-              ),
+              'You have $remainingTasks tasks for today!',
+              style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
         ),
