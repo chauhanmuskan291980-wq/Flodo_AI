@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/models/task.dart';
+import 'package:my_app/screens/detail/detail.dart';
 
 class Tasks extends StatelessWidget {
   final List<Task> taskList = Task.generateTask();
@@ -55,9 +56,17 @@ class Tasks extends StatelessWidget {
   }
   
 
-  // Widget for a single task card
-  Widget _buildTask(BuildContext context, Task task) {
-    return Container(
+ // Widget for a single task card
+Widget _buildTask(BuildContext context, Task task) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => DetailPage(task),
+        ),
+      );
+    },
+    child: Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: task.bgColor ?? Colors.grey.shade100,
@@ -83,15 +92,23 @@ class Tasks extends StatelessWidget {
           Row(
             children: [
               _buildTaskStatus(
-                  task.btnColor ?? Colors.black, task.iconColor ?? Colors.white, '${task.left ?? 0} left'),
+                task.btnColor ?? Colors.black,
+                task.iconColor ?? Colors.white,
+                '${task.left ?? 0} left',
+              ),
               const SizedBox(width: 5),
-              _buildTaskStatus(Colors.white, task.iconColor ?? Colors.black, '${task.done ?? 0} done'),
+              _buildTaskStatus(
+                Colors.white,
+                task.iconColor ?? Colors.black,
+                '${task.done ?? 0} done',
+              ),
             ],
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   // Widget for showing left/done status
   Widget _buildTaskStatus(Color bgColor, Color textColor, String text) {
