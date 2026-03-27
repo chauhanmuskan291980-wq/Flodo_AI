@@ -3,8 +3,17 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db, engine, Base
 from models import Task
 from schemas import TaskCreate
+from fastapi.middleware.cors import CORSMiddleware
 
-app = FastAPI()
+app = FastAPI();
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], # Allows all sites (like your Flutter Web app)
+    allow_credentials=True,
+    allow_methods=["*"], # Allows POST, GET, etc.
+    allow_headers=["*"], # Allows all headers
+)
 
 # Automatically creates tables in Postgres on startup
 @app.on_event("startup")

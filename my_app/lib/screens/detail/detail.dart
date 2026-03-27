@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:my_app/models/task.dart';
+import 'package:my_app/services/api_service.dart';
 import 'package:my_app/screens/detail/date_picker.dart';
 import 'package:my_app/screens/detail/task_titile.dart';
 import 'package:my_app/screens/detail/task_time_line.dart';
@@ -275,25 +276,26 @@ class _DetailPageState extends State<DetailPage> {
               child: const Text("Cancel"),
             ),
             ElevatedButton(
-              onPressed: () {
-                final newTask = {
-                  'time': timeController.text,
-                  'title': titleController.text,
-                  'slot': slotController.text,
-                  'status': selectedStatus,
-                  'tiColor': Colors.blue,
-                  'bgColor': Colors.blue.shade50,
-                };
+              onPressed: () async {
+                final List<Map<String, dynamic>> currentDesc = [
+                  {
+                    'time': timeController.text,
+                    'title': titleController.text,
+                    'slot': slotController.text,
+                    'status': selectedStatus,
+                  },
+                ];
 
-                int index = detailList.indexWhere(
-                  (e) => e['time'] == timeController.text,
+                //  Send to Backend
+                await ApiService.postTask(
+                  title: titleController.text,
+                  iconColor: Colors.blue,
+                  bgColor: Colors.blue.withOpacity(0.1),
+                  desc: currentDesc,
                 );
+
                 setState(() {
-                  if (index != -1) {
-                    detailList[index] = newTask;
-                  } else {
-                    detailList.add(newTask);
-                  }
+                  detailList.add(currentDesc[0]);
                 });
 
                 Navigator.pop(context);
