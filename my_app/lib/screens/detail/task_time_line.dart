@@ -3,8 +3,10 @@ import 'package:timeline_tile/timeline_tile.dart';
 
 class TaskTimeLine extends StatelessWidget {
   final Map<String, dynamic> detail;
+  final VoidCallback? onDelete;
+  final VoidCallback? onEdit;
 
-  const TaskTimeLine(this.detail, {super.key});
+  const TaskTimeLine(this.detail, {this.onDelete, this.onEdit, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -96,18 +98,14 @@ class TaskTimeLine extends StatelessWidget {
                 ),
               ),
 
-              if (title.isNotEmpty) ...[
+              if ((detail['title'] ?? '').isNotEmpty) ...[
                 IconButton(
                   icon: const Icon(Icons.edit, size: 18),
-                  onPressed: () {
-                    print("Edit clicked");
-                  },
+                  onPressed: onEdit,
                 ),
                 IconButton(
                   icon: const Icon(Icons.delete, size: 18, color: Colors.red),
-                  onPressed: () {
-                    print("Delete clicked");
-                  },
+                  onPressed: onDelete,
                 ),
               ],
             ],
