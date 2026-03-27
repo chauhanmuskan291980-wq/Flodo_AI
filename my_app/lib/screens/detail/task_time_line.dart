@@ -15,7 +15,9 @@ class TaskTimeLine extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Timeline
-          _buildTimeline(detail['tiColor'] ?? const Color.fromARGB(255, 8, 125, 152)),
+          _buildTimeline(
+            detail['tiColor'] ?? const Color.fromARGB(255, 8, 125, 152),
+          ),
 
           const SizedBox(width: 10),
 
@@ -26,13 +28,14 @@ class TaskTimeLine extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(detail['time'] ?? ''),
-                detail['title'].isNotEmpty ?
-                _buildCard(
-                  detail['bgColor'] ?? const Color.fromARGB(255, 255, 255, 255),
-                  detail['title'] ?? '',
-                  detail['slot'] ?? '',
-                ):
-                _buildCard(Colors.white, '', '')
+                detail['title'].isNotEmpty
+                    ? _buildCard(
+                        detail['bgColor'] ??
+                            const Color.fromARGB(255, 255, 255, 255),
+                        detail['title'] ?? '',
+                        detail['slot'] ?? '',
+                      )
+                    : _buildCard(Colors.white, '', ''),
               ],
             ),
           ),
@@ -61,41 +64,59 @@ class TaskTimeLine extends StatelessWidget {
             ),
           ),
         ),
-        afterLineStyle: LineStyle(
-          thickness: 2,
-          color: color,
-        ),
+        afterLineStyle: LineStyle(thickness: 2, color: color),
       ),
     );
   }
 
   Widget _buildCard(Color bgColor, String title, String slot) {
     return Container(
-       width: 250,
-       decoration: BoxDecoration(
+      width: 250,
+      decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           topRight: Radius.circular(10),
           bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10)
-        )
-       ),
-       padding: EdgeInsets.all(15),
-       margin: EdgeInsets.all(5),
-       child: Column(
+          bottomRight: Radius.circular(10),
+        ),
+      ),
+      padding: const EdgeInsets.all(15),
+      margin: const EdgeInsets.all(5),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title ,
-          style: TextStyle(
-            fontWeight: FontWeight.bold
-          ),),
-          SizedBox(height: 10,),
-          Text(slot,
-          style: TextStyle(
-            color: Colors.grey
-          ),)
+          // 🔥 Top Row (Title + Buttons)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+
+              if (title.isNotEmpty) ...[
+                IconButton(
+                  icon: const Icon(Icons.edit, size: 18),
+                  onPressed: () {
+                    print("Edit clicked");
+                  },
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                  onPressed: () {
+                    print("Delete clicked");
+                  },
+                ),
+              ],
+            ],
+          ),
+
+          const SizedBox(height: 10),
+          Text(slot, style: const TextStyle(color: Colors.grey)),
         ],
-       ),
+      ),
     );
   }
 }
