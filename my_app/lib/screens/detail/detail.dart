@@ -19,10 +19,24 @@ class _DetailPageState extends State<DetailPage> {
   bool isLoading = true;
   String currentFilter = 'All';
 
-  List<dynamic> get filteredList {
-    if (currentFilter == 'All') return detailList;
-    return detailList.where((task) => task['status'] == currentFilter).toList();
-  }
+ 
+List<dynamic> get filteredList {
+  return detailList.where((task) {
+    // 1. Filter by Search Query (Requirement: Search by Title) 
+    final String title = (task['title'] ?? '').toString().toLowerCase();
+    final bool matchesSearch = title.contains(searchQuery.toLowerCase());
+
+    // 2. Filter by Status (Requirement: Filter by Status) [cite: 25]
+    // Options: "To-Do", "In Progress", "Done" [cite: 14]
+    final bool matchesStatus = currentFilter == 'All' || task['status'] == currentFilter;
+
+    return matchesSearch && matchesStatus;
+  }).toList();
+}
+
+  TextEditingController searchController = TextEditingController();
+  bool isSearching = false;
+  String searchQuery = "";
 
   @override
   void initState() {
@@ -65,7 +79,7 @@ class _DetailPageState extends State<DetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color.fromARGB(255, 255, 255, 255),
       body: CustomScrollView(
         slivers: [
           _buildAppBar(context),
@@ -295,15 +309,35 @@ class _DetailPageState extends State<DetailPage> {
     int remainingTasks = totalTasks - doneTasks;
 
     return SliverAppBar(
-      expandedHeight: 90,
+      pinned: true,
+      // Slightly increase height when not searching to accommodate the two-line title
+      expandedHeight: isSearching ? 80 : 100,
       backgroundColor: widget.task.bgColor,
+      elevation: 0,
       leading: IconButton(
-        onPressed: () => Navigator.of(context).pop(),
-        icon: const Icon(Icons.arrow_back_ios),
+        onPressed: () {
+          if (isSearching) {
+            setState(() {
+              isSearching = false;
+              searchQuery = "";
+              searchController.clear();
+            });
+          } else {
+            Navigator.of(context).pop();
+          }
+        },
+        // Change icon based on search state
+        icon: Icon(isSearching ? Icons.close : Icons.arrow_back_ios),
         color: const Color.fromARGB(255, 0, 0, 0),
         iconSize: 20,
       ),
       actions: [
+        // Only show Search Icon if not currently searching
+        if (!isSearching)
+          IconButton(
+            icon: const Icon(Icons.search, color: Colors.black),
+            onPressed: () => setState(() => isSearching = true),
+          ),
         PopupMenuButton<String>(
           icon: const Icon(
             Icons.more_vert,
@@ -320,38 +354,60 @@ class _DetailPageState extends State<DetailPage> {
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
-        titlePadding: const EdgeInsets.only(
-          left: 60,
-          bottom: 15,
-        ), // Prevents text from hitting the back button
-        title: Column(
-          mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '$remainingTasks tasks',
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Color.fromARGB(255, 0, 0, 0), // 🔹 Forced White
-                fontSize: 18,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              'You have $remainingTasks tasks for today!',
-              style: TextStyle(
-                fontSize: 10,
-                color: const Color.fromARGB(
-                  255,
-                  0,
-                  0,
-                  0,
-                ).withOpacity(0.7), // 🔹 Forced Light Grey/White
-                fontWeight: FontWeight.normal,
-              ),
-            ),
-          ],
+        titlePadding: EdgeInsets.only(
+          left: isSearching ? 50 : 60,
+          bottom: isSearching ? 12 : 15,
+          right: 20,
         ),
+        // Toggle between Search TextField and Task Summary Title
+        title: isSearching
+            ? TextField(
+                controller: searchController,
+                autofocus: true,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                  fontWeight: FontWeight.normal,
+                ),
+                decoration: const InputDecoration(
+                  hintText: "Search tasks by title...", // Requirement
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                onChanged: (value) {
+                  setState(() {
+                    searchQuery = value.toLowerCase();
+                  });
+                },
+              )
+            : Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$remainingTasks tasks',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 0, 0, 0),
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'You have $remainingTasks tasks for today!',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: const Color.fromARGB(
+                        255,
+                        0,
+                        0,
+                        0,
+                      ).withOpacity(0.7),
+                      fontWeight: FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }
