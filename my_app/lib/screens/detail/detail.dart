@@ -17,6 +17,12 @@ class DetailPage extends StatefulWidget {
 class _DetailPageState extends State<DetailPage> {
   List<dynamic> detailList = [];
   bool isLoading = true;
+  String currentFilter = 'All';
+
+  List<dynamic> get filteredList {
+    if (currentFilter == 'All') return detailList;
+    return detailList.where((task) => task['status'] == currentFilter).toList();
+  }
 
   @override
   void initState() {
@@ -74,9 +80,19 @@ class _DetailPageState extends State<DetailPage> {
                   topRight: Radius.circular(30),
                 ),
               ),
-              child: const Column(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: [DatePicker(), TaskTitle()],
+                children: [
+                  DatePicker(),
+                  TaskTitle(
+                    selectedFilter: currentFilter,
+                    onFilterChanged: (newFilter) {
+                      setState(() {
+                        currentFilter = newFilter;
+                      });
+                    },
+                  ),
+                ],
               ),
             ),
           ),
@@ -98,7 +114,7 @@ class _DetailPageState extends State<DetailPage> {
                 SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
                     return TaskTimeLine(
-                      detailList[index],
+                      filteredList[index],
                       index,
                       onDelete: () async {
                         // Use 'as int?' or check for null to prevent the crash
@@ -130,7 +146,7 @@ class _DetailPageState extends State<DetailPage> {
                         _showEditDialog(context, index);
                       },
                     );
-                  }, childCount: detailList.length),
+                  }, childCount: filteredList.length),
                 ),
         ],
       ),
