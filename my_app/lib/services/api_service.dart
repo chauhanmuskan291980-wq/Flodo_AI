@@ -88,7 +88,6 @@ class ApiService {
   ) async {
     final url = Uri.parse('$baseUrl/tasks/$taskId');
     try {
-      // 🔹 Change .put to .patch to match the backend @app.patch
       final response = await http.patch(
         url,
         headers: {"Content-Type": "application/json"},

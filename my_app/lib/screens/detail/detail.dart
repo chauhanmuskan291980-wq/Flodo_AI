@@ -51,7 +51,7 @@ class _DetailPageState extends State<DetailPage> {
         isLoading = false;
       });
     } catch (e) {
-      debugPrint("🔴 LOADING ERROR: $e"); // 🔹 Prints error to console
+      debugPrint("LOADING ERROR: $e"); // 🔹 Prints error to console
       setState(() => isLoading = false);
     }
   }
@@ -241,7 +241,7 @@ class _DetailPageState extends State<DetailPage> {
                             if (context.mounted)
                               Navigator.of(context, rootNavigator: true).pop();
                           } catch (e) {
-                            debugPrint("🔴 UPDATE FAILED: $e");
+                            debugPrint(" UPDATE FAILED: $e");
                             if (context.mounted) {
                               setDialogState(() => isUpdating = false);
                               ScaffoldMessenger.of(context).showSnackBar(
