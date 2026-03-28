@@ -3,6 +3,7 @@ from typing import List, Optional, Any
 
 class TaskCreate(BaseModel):
     title: str
+    blocked_by: Optional[int] = None
     iconData: Optional[int] = None
     bgColor: Optional[str] = None
     iconColor: Optional[str] = None
@@ -18,6 +19,7 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     # All fields must be Optional for a PATCH request
     title: Optional[str] = None
+    blocked_by: Optional[int] = None
     iconData: Optional[int] = None
     bgColor: Optional[str] = None
     iconColor: Optional[str] = None

@@ -1,5 +1,5 @@
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import String, Integer, Boolean
+from sqlalchemy.orm import Mapped, mapped_column 
+from sqlalchemy import ForeignKey, String, Integer, Boolean
 from sqlalchemy.dialects.postgresql import JSONB  # 🔹 Postgres Specific
 from typing import Optional, List, Any
 from database import Base
@@ -9,7 +9,7 @@ class Task(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
-    
+    blocked_by: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("tasks.id"), nullable=True)
     # Colors and Icons
     bgColor: Mapped[Optional[str]] = mapped_column(String(10))
     iconColor: Mapped[Optional[str]] = mapped_column(String(10))

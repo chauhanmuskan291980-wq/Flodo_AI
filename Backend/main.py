@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from database import get_db, engine, Base
@@ -7,6 +9,7 @@ from schemas import TaskCreate
 import models
 import schemas
 from fastapi.middleware.cors import CORSMiddleware
+import time;
 app = FastAPI();
 
 app.add_middleware(
@@ -25,6 +28,7 @@ async def init_db():
 
 @app.post("/api/tasks")
 async def add_new_task(task_in: TaskCreate, db: AsyncSession = Depends(get_db)):
+    await asyncio.sleep(2)
     try:
         # Convert Pydantic to Dictionary
         new_task = Task(**task_in.model_dump()) 
@@ -61,6 +65,7 @@ async def delete_task(task_id: int, db: AsyncSession = Depends(get_db)):
 
 @app.patch("/api/tasks/{task_id}")
 async def update_task_desc(task_id: int, task_update: schemas.TaskUpdate, db: AsyncSession = Depends(get_db)):
+    await asyncio.sleep(2)
     # 1. Find the task
     result = await db.execute(select(models.Task).filter(models.Task.id == task_id))
     db_task = result.scalars().first()
@@ -70,6 +75,11 @@ async def update_task_desc(task_id: int, task_update: schemas.TaskUpdate, db: As
     
     # 2. Get the data sent from Flutter (ignoring nulls)
     update_data = task_update.model_dump(exclude_unset=True)
+  
+
+    # Logic Check: Prevent self-blocking during update
+    if update_data.get("blocked_by") == task_id:
+        raise HTTPException(status_code=400, detail="A task cannot be blocked by itself.")
     
     # 3. Update only the fields provided
     for key, value in update_data.items():

@@ -13,6 +13,7 @@ class ApiService {
 
   static Future<void> postTask({
     required String title,
+    int? blockedBy,
     required Color iconColor,
     required Color bgColor,
     required List<Map<String, dynamic>> desc,
@@ -22,6 +23,7 @@ class ApiService {
 
     final body = jsonEncode({
       "title": title,
+      'blocked_by': blockedBy,
       "iconData": iconCode ?? Icons.person.codePoint,
       "bgColor": colorToHex(bgColor),
       "iconColor": colorToHex(iconColor),

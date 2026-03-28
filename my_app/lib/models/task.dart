@@ -5,6 +5,7 @@ class Task {
   int? id;
   IconData? iconData;
   String? title;
+  int? blockBy;
   Color? bgColor;
   Color? iconColor;
   Color? btnColor;
@@ -16,6 +17,7 @@ class Task {
     this.id,
     this.iconData,
     this.title,
+    this.blockBy,
     this.bgColor,
     this.iconColor,
     this.btnColor,
@@ -34,7 +36,7 @@ class Task {
         btnColor: kYellow,
         left: 3,
         done: 1,
-        desc: []
+        desc: [],
       ),
       Task(
         iconData: Icons.cases_rounded,
@@ -44,7 +46,7 @@ class Task {
         btnColor: kRed,
         left: 0,
         done: 0,
-        desc: []
+        desc: [],
       ),
       Task(
         iconData: Icons.favorite_rounded,
@@ -54,7 +56,7 @@ class Task {
         btnColor: kBlue,
         left: 0,
         done: 0,
-        desc: []
+        desc: [],
       ),
       Task(isLast: true),
     ];
