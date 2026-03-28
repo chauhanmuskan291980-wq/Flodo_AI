@@ -27,26 +27,31 @@ class _DetailPageState extends State<DetailPage> {
   Future<void> _loadTaskDetails() async {
     try {
       final List<dynamic> data = await ApiService.getTasks();
-
       List<Map<String, dynamic>> allSubTasks = [];
 
-      // 🔹 LOOP through every task in the database
       for (var task in data) {
-        if (task['desc'] != null && task['desc'] is List) {
-          // Add all sub-tasks from this specific task to our big list
-          allSubTasks.addAll(List<Map<String, dynamic>>.from(task['desc']));
+        // 🔹 Fallback to empty list if null to prevent "Iterable" error
+        final List<dynamic> originalDescList = task['desc'] ?? [];
+
+        for (int i = 0; i < originalDescList.length; i++) {
+          Map<String, dynamic> displayItem = Map<String, dynamic>.from(
+            originalDescList[i] as Map,
+          );
+
+          // 🔹 CRITICAL: Store these three things for instant UI updates
+          displayItem['id'] = task['id']; // The DB ID
+          displayItem['subIndex'] = i; // Position in JSON
+          displayItem['parentList'] = originalDescList; // The full JSON list
+
+          allSubTasks.add(displayItem);
         }
       }
-
       setState(() {
-        // Now detailList contains EVERY sub-task from EVERY category in the DB
         detailList = allSubTasks;
         isLoading = false;
       });
-
-      print("Total sub-tasks fetched: ${detailList.length}");
     } catch (e) {
-      print("Fetch Error: $e");
+      debugPrint("🔴 LOADING ERROR: $e"); // 🔹 Prints error to console
       setState(() => isLoading = false);
     }
   }
@@ -95,10 +100,31 @@ class _DetailPageState extends State<DetailPage> {
                     return TaskTimeLine(
                       detailList[index],
                       index,
-                      onDelete: () {
-                        setState(() {
-                          detailList.removeAt(index);
-                        });
+                      onDelete: () async {
+                        // Use 'as int?' or check for null to prevent the crash
+                        final dynamic idValue = detailList[index]['id'];
+
+                        if (idValue == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Error: Task ID missing. Try refreshing.",
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+
+                        int taskId = idValue as int; // Now it is safe to cast
+
+                        final bool success = await ApiService.deletetask(
+                          taskId,
+                        );
+                        if (success) {
+                          setState(() {
+                            detailList.removeAt(index);
+                          });
+                        }
                       },
                       onEdit: () {
                         _showEditDialog(context, index);
@@ -113,81 +139,128 @@ class _DetailPageState extends State<DetailPage> {
 
   void _showEditDialog(BuildContext context, int index) {
     final item = detailList[index];
-
     TextEditingController timeController = TextEditingController(
       text: item['time'],
     );
-
     TextEditingController titleController = TextEditingController(
       text: item['title'],
     );
-
     TextEditingController slotController = TextEditingController(
       text: item['slot'],
     );
-
     String selectedStatus = item['status'] ?? 'Pending';
+
+    bool isUpdating = false; // Loading state
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          title: const Text("Edit Task"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              //  Time
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(labelText: "Time"),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Edit Task"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: timeController,
+                    decoration: const InputDecoration(labelText: "Time"),
+                    enabled: !isUpdating,
+                  ),
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: "Title"),
+                    enabled: !isUpdating,
+                  ),
+                  TextField(
+                    controller: slotController,
+                    decoration: const InputDecoration(labelText: "Slot"),
+                    enabled: !isUpdating,
+                  ),
+                  DropdownButtonFormField<String>(
+                    value: selectedStatus,
+                    items: ['Pending', 'In Progress', 'Done']
+                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
+                        .toList(),
+                    onChanged: isUpdating
+                        ? null
+                        : (v) => setDialogState(() => selectedStatus = v!),
+                  ),
+                ],
               ),
+              actions: [
+                TextButton(
+                  onPressed: isUpdating ? null : () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          setDialogState(() => isUpdating = true);
+                          try {
+                            final int taskId = item['id'] as int;
+                            final int subIndex = item['subIndex'] as int;
 
-              //  Title / Status
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: "Title"),
-              ),
+                            // 1. Force the list to be List<Map<String, dynamic>>
+                            List<Map<String, dynamic>> fullList =
+                                (item['parentList'] as List)
+                                    .map(
+                                      (e) =>
+                                          Map<String, dynamic>.from(e as Map),
+                                    )
+                                    .toList();
 
-              //  Slot / Status detail
-              TextField(
-                controller: slotController,
-                decoration: const InputDecoration(labelText: "Slot"),
-              ),
-              DropdownButtonFormField<String>(
-                value: selectedStatus,
-                items: ['Pending', 'In Progress', 'Done']
-                    .map(
-                      (status) =>
-                          DropdownMenuItem(value: status, child: Text(status)),
-                    )
-                    .toList(),
-                onChanged: (value) {
-                  selectedStatus = value!;
-                },
-                decoration: const InputDecoration(labelText: "Status"),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
+                            final Map<String, dynamic> newEntry = {
+                              'time': timeController.text,
+                              'title': titleController.text,
+                              'slot': slotController.text,
+                              'status': selectedStatus,
+                            };
 
-            ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  detailList[index]['time'] = timeController.text;
-                  detailList[index]['title'] = titleController.text;
-                  detailList[index]['slot'] = slotController.text;
-                  detailList[index]['status'] = selectedStatus;
-                });
+                            // 2. Update the specific index
+                            fullList[subIndex] = newEntry;
 
-                Navigator.pop(context);
-              },
-              child: const Text("Save"),
-            ),
-          ],
+                            // 3. API Call
+                            await ApiService.updatetask(taskId, {
+                              "desc": fullList,
+                            });
+
+                            // 4. Update UI with typed data
+                            setState(() {
+                              detailList[index] = {
+                                ...Map<String, dynamic>.from(
+                                  item,
+                                ), // Ensure item is casted
+                                ...newEntry,
+                                'parentList': fullList,
+                              };
+                            });
+
+                            if (context.mounted)
+                              Navigator.of(context, rootNavigator: true).pop();
+                          } catch (e) {
+                            debugPrint("🔴 UPDATE FAILED: $e");
+                            if (context.mounted) {
+                              setDialogState(() => isUpdating = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Error: $e")),
+                              );
+                            }
+                          }
+                        },
+                  child: isUpdating
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text("Save"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -267,113 +340,123 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-   void _showAddTaskDialog(BuildContext context) {
-  TextEditingController titleController = TextEditingController();
-  TextEditingController timeController = TextEditingController();
-  TextEditingController slotController = TextEditingController();
-  String selectedStatus = 'Pending';
-  bool isAdding = false; // Local state to track loading 
+  void _showAddTaskDialog(BuildContext context) {
+    TextEditingController titleController = TextEditingController();
+    TextEditingController timeController = TextEditingController();
+    TextEditingController slotController = TextEditingController();
+    String selectedStatus = 'Pending';
+    bool isAdding = false; // Local state to track loading
 
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Prevent closing while saving
-    builder: (context) {
-      // 1. Wrap with StatefulBuilder to manage dialog-specific state
-      return StatefulBuilder(builder: (context, setDialogState) {
-        return AlertDialog(
-          title: const Text("Add New Task"),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: titleController,
-                decoration: const InputDecoration(labelText: "Title"),
-                enabled: !isAdding, // Disable input during loading
-              ),
-              TextField(
-                controller: timeController,
-                decoration: const InputDecoration(labelText: "Time"),
-                enabled: !isAdding,
-              ),
-              TextField(
-                controller: slotController,
-                decoration: const InputDecoration(labelText: "Slot"),
-                enabled: !isAdding,
-              ),
-              DropdownButtonFormField<String>(
-                value: selectedStatus,
-                items: ['Pending', 'In Progress', 'Done']
-                    .map((status) => DropdownMenuItem(value: status, child: Text(status)))
-                    .toList(),
-                onChanged: isAdding ? null : (value) {
-                  setDialogState(() => selectedStatus = value!);
-                },
-                decoration: const InputDecoration(labelText: "Status"),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: isAdding ? null : () => Navigator.pop(context),
-              child: const Text("Cancel"),
-            ),
-            ElevatedButton(
-              // 2. Disable button if isAdding is true to prevent double-tapping 
-              onPressed: isAdding
-                  ? null
-                  : () async {
-                      // 3. Start loading state 
-                      setDialogState(() => isAdding = true);
-
-                      try {
-                        // 4. Simulate mandatory 2-second delay [cite: 28]
-                        await Future.delayed(const Duration(seconds: 2));
-
-                        final List<Map<String, dynamic>> currentDesc = [
-                          {
-                            'time': timeController.text,
-                            'title': titleController.text,
-                            'slot': slotController.text,
-                            'status': selectedStatus,
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent closing while saving
+      builder: (context) {
+        // 1. Wrap with StatefulBuilder to manage dialog-specific state
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Add New Task"),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: titleController,
+                    decoration: const InputDecoration(labelText: "Title"),
+                    enabled: !isAdding, // Disable input during loading
+                  ),
+                  TextField(
+                    controller: timeController,
+                    decoration: const InputDecoration(labelText: "Time"),
+                    enabled: !isAdding,
+                  ),
+                  TextField(
+                    controller: slotController,
+                    decoration: const InputDecoration(labelText: "Slot"),
+                    enabled: !isAdding,
+                  ),
+                  DropdownButtonFormField<String>(
+                    value: selectedStatus,
+                    items: ['Pending', 'In Progress', 'Done']
+                        .map(
+                          (status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(status),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: isAdding
+                        ? null
+                        : (value) {
+                            setDialogState(() => selectedStatus = value!);
                           },
-                        ];
+                    decoration: const InputDecoration(labelText: "Status"),
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isAdding ? null : () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  // 2. Disable button if isAdding is true to prevent double-tapping
+                  onPressed: isAdding
+                      ? null
+                      : () async {
+                          // 3. Start loading state
+                          setDialogState(() => isAdding = true);
 
-                        // API call [cite: 34]
-                        await ApiService.postTask(
-                          title: titleController.text,
-                          iconColor: Colors.blue,
-                          bgColor: Colors.blue.withOpacity(0.1),
-                          desc: currentDesc,
-                        );
+                          try {
+                            // 4. Simulate mandatory 2-second delay [cite: 28]
+                            await Future.delayed(const Duration(seconds: 2));
 
-                        // Update main page list
-                        setState(() {
-                          detailList.add(currentDesc[0]);
-                        });
+                            final List<Map<String, dynamic>> currentDesc = [
+                              {
+                                'time': timeController.text,
+                                'title': titleController.text,
+                                'slot': slotController.text,
+                                'status': selectedStatus,
+                              },
+                            ];
 
-                        if (context.mounted) Navigator.pop(context);
-                      } catch (e) {
-                        print("Error: $e");
-                      } finally {
-                        // 5. Reset loading state if the dialog is still open
-                        if (context.mounted) setDialogState(() => isAdding = false);
-                      }
-                    },
-              child: isAdding
-                  ? const SizedBox(
-                      height: 20,
-                      width: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Text("Add"),
-            ),
-          ],
+                            // API call [cite: 34]
+                            await ApiService.postTask(
+                              title: titleController.text,
+                              iconColor: Colors.blue,
+                              bgColor: Colors.blue.withOpacity(0.1),
+                              desc: currentDesc,
+                            );
+
+                            // Update main page list
+                            setState(() {
+                              detailList.add(currentDesc[0]);
+                            });
+
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            print("Error: $e");
+                          } finally {
+                            // 5. Reset loading state if the dialog is still open
+                            if (context.mounted)
+                              setDialogState(() => isAdding = false);
+                          }
+                        },
+                  child: isAdding
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text("Add"),
+                ),
+              ],
+            );
+          },
         );
-      });
-    },
-  );
-}
+      },
+    );
+  }
 }

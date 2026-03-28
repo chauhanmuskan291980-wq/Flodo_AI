@@ -88,13 +88,18 @@ class ApiService {
   ) async {
     final url = Uri.parse('$baseUrl/tasks/$taskId');
     try {
-      final response = await http.put(
+      // 🔹 Change .put to .patch to match the backend @app.patch
+      final response = await http.patch(
         url,
-        headers: {"Content-type": "application/json"},
+        headers: {"Content-Type": "application/json"},
         body: jsonEncode(updatedData),
       );
+
       if (response.statusCode == 200) {
         print("Task updated in postgres");
+      } else {
+        print("Update Failed with status: ${response.statusCode}");
+        print("Response body: ${response.body}");
       }
     } catch (error) {
       print("Update Error: $error");
@@ -118,20 +123,20 @@ class ApiService {
   }
 
   static Color hexToColor(String? hexString) {
-  if (hexString == null || hexString.isEmpty) return Colors.blue;
+    if (hexString == null || hexString.isEmpty) return Colors.blue;
 
-  String cleanedHex = hexString.replaceFirst('#', '').trim();
+    String cleanedHex = hexString.replaceFirst('#', '').trim();
 
-  // If it's a 6-char hex (RRGGBB), add 'FF' for full opacity
-  if (cleanedHex.length == 6) {
-    cleanedHex = 'FF$cleanedHex';
+    // If it's a 6-char hex (RRGGBB), add 'FF' for full opacity
+    if (cleanedHex.length == 6) {
+      cleanedHex = 'FF$cleanedHex';
+    }
+
+    // Handle 8-char hex (AARRGGBB)
+    try {
+      return Color(int.parse(cleanedHex, radix: 16));
+    } catch (e) {
+      return Colors.blue;
+    }
   }
-
-  // Handle 8-char hex (AARRGGBB)
-  try {
-    return Color(int.parse(cleanedHex, radix: 16));
-  } catch (e) {
-    return Colors.blue; 
-  }
-}
 }
