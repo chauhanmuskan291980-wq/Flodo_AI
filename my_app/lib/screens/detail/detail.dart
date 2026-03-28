@@ -24,33 +24,32 @@ class _DetailPageState extends State<DetailPage> {
     _loadTaskDetails();
   }
 
-Future<void> _loadTaskDetails() async {
-  try {
-    final List<dynamic> data = await ApiService.getTasks(); 
+  Future<void> _loadTaskDetails() async {
+    try {
+      final List<dynamic> data = await ApiService.getTasks();
 
-    List<Map<String, dynamic>> allSubTasks = [];
+      List<Map<String, dynamic>> allSubTasks = [];
 
-    // 🔹 LOOP through every task in the database
-    for (var task in data) {
-      if (task['desc'] != null && task['desc'] is List) {
-        // Add all sub-tasks from this specific task to our big list
-        allSubTasks.addAll(List<Map<String, dynamic>>.from(task['desc']));
+      // 🔹 LOOP through every task in the database
+      for (var task in data) {
+        if (task['desc'] != null && task['desc'] is List) {
+          // Add all sub-tasks from this specific task to our big list
+          allSubTasks.addAll(List<Map<String, dynamic>>.from(task['desc']));
+        }
       }
+
+      setState(() {
+        // Now detailList contains EVERY sub-task from EVERY category in the DB
+        detailList = allSubTasks;
+        isLoading = false;
+      });
+
+      print("Total sub-tasks fetched: ${detailList.length}");
+    } catch (e) {
+      print("Fetch Error: $e");
+      setState(() => isLoading = false);
     }
-
-    setState(() {
-      // Now detailList contains EVERY sub-task from EVERY category in the DB
-      detailList = allSubTasks;
-      isLoading = false;
-    });
-    
-    print("Total sub-tasks fetched: ${detailList.length}");
-  } catch (e) {
-    print("Fetch Error: $e");
-    setState(() => isLoading = false);
   }
-}
-
 
   @override
   Widget build(BuildContext context) {
@@ -93,7 +92,6 @@ Future<void> _loadTaskDetails() async {
               : // 🔹 Inside your SliverList in detail.dart
                 SliverList(
                   delegate: SliverChildBuilderDelegate((context, index) {
-                  
                     return TaskTimeLine(
                       detailList[index],
                       index,
@@ -269,16 +267,19 @@ Future<void> _loadTaskDetails() async {
     );
   }
 
-  void _showAddTaskDialog(BuildContext context) {
-    TextEditingController titleController = TextEditingController();
-    TextEditingController timeController = TextEditingController();
-    TextEditingController slotController = TextEditingController();
+   void _showAddTaskDialog(BuildContext context) {
+  TextEditingController titleController = TextEditingController();
+  TextEditingController timeController = TextEditingController();
+  TextEditingController slotController = TextEditingController();
+  String selectedStatus = 'Pending';
+  bool isAdding = false; // Local state to track loading 
 
-    String selectedStatus = 'Pending';
-
-    showDialog(
-      context: context,
-      builder: (context) {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Prevent closing while saving
+    builder: (context) {
+      // 1. Wrap with StatefulBuilder to manage dialog-specific state
+      return StatefulBuilder(builder: (context, setDialogState) {
         return AlertDialog(
           title: const Text("Add New Task"),
           content: Column(
@@ -287,28 +288,25 @@ Future<void> _loadTaskDetails() async {
               TextField(
                 controller: titleController,
                 decoration: const InputDecoration(labelText: "Title"),
+                enabled: !isAdding, // Disable input during loading
               ),
               TextField(
                 controller: timeController,
-                decoration: const InputDecoration(
-                  labelText: "Time (e.g. 10:00 AM)",
-                ),
+                decoration: const InputDecoration(labelText: "Time"),
+                enabled: !isAdding,
               ),
               TextField(
                 controller: slotController,
                 decoration: const InputDecoration(labelText: "Slot"),
+                enabled: !isAdding,
               ),
-
               DropdownButtonFormField<String>(
                 value: selectedStatus,
                 items: ['Pending', 'In Progress', 'Done']
-                    .map(
-                      (status) =>
-                          DropdownMenuItem(value: status, child: Text(status)),
-                    )
+                    .map((status) => DropdownMenuItem(value: status, child: Text(status)))
                     .toList(),
-                onChanged: (value) {
-                  selectedStatus = value!;
+                onChanged: isAdding ? null : (value) {
+                  setDialogState(() => selectedStatus = value!);
                 },
                 decoration: const InputDecoration(labelText: "Status"),
               ),
@@ -316,39 +314,66 @@ Future<void> _loadTaskDetails() async {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: isAdding ? null : () => Navigator.pop(context),
               child: const Text("Cancel"),
             ),
             ElevatedButton(
-              onPressed: () async {
-                final List<Map<String, dynamic>> currentDesc = [
-                  {
-                    'time': timeController.text,
-                    'title': titleController.text,
-                    'slot': slotController.text,
-                    'status': selectedStatus,
-                  },
-                ];
+              // 2. Disable button if isAdding is true to prevent double-tapping 
+              onPressed: isAdding
+                  ? null
+                  : () async {
+                      // 3. Start loading state 
+                      setDialogState(() => isAdding = true);
 
-                //  Send to Backend
-                await ApiService.postTask(
-                  title: titleController.text,
-                  iconColor: Colors.blue,
-                  bgColor: Colors.blue.withOpacity(0.1),
-                  desc: currentDesc,
-                );
+                      try {
+                        // 4. Simulate mandatory 2-second delay [cite: 28]
+                        await Future.delayed(const Duration(seconds: 2));
 
-                setState(() {
-                  detailList.add(currentDesc[0]);
-                });
+                        final List<Map<String, dynamic>> currentDesc = [
+                          {
+                            'time': timeController.text,
+                            'title': titleController.text,
+                            'slot': slotController.text,
+                            'status': selectedStatus,
+                          },
+                        ];
 
-                Navigator.pop(context);
-              },
-              child: const Text("Add"),
+                        // API call [cite: 34]
+                        await ApiService.postTask(
+                          title: titleController.text,
+                          iconColor: Colors.blue,
+                          bgColor: Colors.blue.withOpacity(0.1),
+                          desc: currentDesc,
+                        );
+
+                        // Update main page list
+                        setState(() {
+                          detailList.add(currentDesc[0]);
+                        });
+
+                        if (context.mounted) Navigator.pop(context);
+                      } catch (e) {
+                        print("Error: $e");
+                      } finally {
+                        // 5. Reset loading state if the dialog is still open
+                        if (context.mounted) setDialogState(() => isAdding = false);
+                      }
+                    },
+              child: isAdding
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Text("Add"),
             ),
           ],
         );
-      },
-    );
-  }
+      });
+    },
+  );
+}
 }
