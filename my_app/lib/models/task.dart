@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:my_app/constants/colors.dart';
 
 class Task {
+  int? id;
   IconData? iconData;
   String? title;
   Color? bgColor;
@@ -12,6 +13,7 @@ class Task {
   List<Map<String, dynamic>>? desc;
   bool? isLast;
   Task({
+    this.id,
     this.iconData,
     this.title,
     this.bgColor,
@@ -32,60 +34,7 @@ class Task {
         btnColor: kYellow,
         left: 3,
         done: 1,
-        desc: [
-          {
-            'time':'9:00 AM',
-            'title':'Go for a walk with Dog',
-            'slot':'9:00 - 10:00 AM',
-            'status':'Pending',
-            'tiColor':kRedDark,
-            'bgColor': kRedLight
-          },
-          {
-            'time':'10:00 AM',
-            'title':'Shot on Dribble',
-            'slot':'10:00 - 11:00 AM',
-            'status':'Pending',
-            'tiColor':kBlueDark,
-            'bgColor': kBlueLight
-          },
-          {
-            'time':'11:00 AM',
-            'title':'',
-            'slot':'',
-            'status':'Empty',
-            'tiColor':Colors.grey.withOpacity(0.3),
-          },
-          {
-            'time':'12:00 AM',
-            'title':'',
-            'slot':'',
-            'status':'Empty',
-            'tiColor':Colors.grey.withOpacity(0.3),
-          },
-          {
-            'time':'1:00 PM',
-            'title':'Coding in Flutter',
-            'slot':'11:00 - 12:00 AM',
-            'status':'Pending',
-            'tiColor':kYellowDark,
-            'bgColor': kYellowLight
-          },
-          {
-            'time':'2:00 PM',
-            'title':'',
-            'slot':'',
-            'status':'Empty',
-            'tiColor':Colors.grey.withOpacity(0.3),
-          },
-          {
-            'time':'3:00 PM',
-            'title':'',
-            'slot':'',
-            'status':'Empty',
-            'tiColor':Colors.grey.withOpacity(0.3),
-          },
-        ]
+        desc: []
       ),
       Task(
         iconData: Icons.cases_rounded,
@@ -95,6 +44,7 @@ class Task {
         btnColor: kRed,
         left: 0,
         done: 0,
+        desc: []
       ),
       Task(
         iconData: Icons.favorite_rounded,
@@ -104,6 +54,7 @@ class Task {
         btnColor: kBlue,
         left: 0,
         done: 0,
+        desc: []
       ),
       Task(isLast: true),
     ];

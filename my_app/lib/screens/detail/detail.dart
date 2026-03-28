@@ -15,13 +15,42 @@ class DetailPage extends StatefulWidget {
 }
 
 class _DetailPageState extends State<DetailPage> {
-  late List detailList;
+  List<dynamic> detailList = [];
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    detailList = widget.task.desc ?? [];
+    _loadTaskDetails();
   }
+
+Future<void> _loadTaskDetails() async {
+  try {
+    final List<dynamic> data = await ApiService.getTasks(); 
+
+    List<Map<String, dynamic>> allSubTasks = [];
+
+    // 🔹 LOOP through every task in the database
+    for (var task in data) {
+      if (task['desc'] != null && task['desc'] is List) {
+        // Add all sub-tasks from this specific task to our big list
+        allSubTasks.addAll(List<Map<String, dynamic>>.from(task['desc']));
+      }
+    }
+
+    setState(() {
+      // Now detailList contains EVERY sub-task from EVERY category in the DB
+      detailList = allSubTasks;
+      isLoading = false;
+    });
+    
+    print("Total sub-tasks fetched: ${detailList.length}");
+  } catch (e) {
+    print("Fetch Error: $e");
+    setState(() => isLoading = false);
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,25 +90,23 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                   ),
                 )
-              : SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) => TaskTimeLine(
+              : // 🔹 Inside your SliverList in detail.dart
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                  
+                    return TaskTimeLine(
                       detailList[index],
-
-                      // Delete
+                      index,
                       onDelete: () {
                         setState(() {
                           detailList.removeAt(index);
                         });
                       },
-
-                      // Edit
                       onEdit: () {
                         _showEditDialog(context, index);
                       },
-                    ),
-                    childCount: detailList.length,
-                  ),
+                    );
+                  }, childCount: detailList.length),
                 ),
         ],
       ),
@@ -182,16 +209,19 @@ class _DetailPageState extends State<DetailPage> {
 
     return SliverAppBar(
       expandedHeight: 90,
-      backgroundColor: Colors.black,
+      backgroundColor: widget.task.bgColor,
       leading: IconButton(
         onPressed: () => Navigator.of(context).pop(),
         icon: const Icon(Icons.arrow_back_ios),
-        color: Colors.white,
+        color: const Color.fromARGB(255, 0, 0, 0),
         iconSize: 20,
       ),
       actions: [
         PopupMenuButton<String>(
-          icon: const Icon(Icons.more_vert, color: Colors.white),
+          icon: const Icon(
+            Icons.more_vert,
+            color: Color.fromARGB(255, 0, 0, 0),
+          ),
           onSelected: (value) {
             if (value == 'add') {
               _showAddTaskDialog(context);
@@ -203,6 +233,10 @@ class _DetailPageState extends State<DetailPage> {
         ),
       ],
       flexibleSpace: FlexibleSpaceBar(
+        titlePadding: const EdgeInsets.only(
+          left: 60,
+          bottom: 15,
+        ), // Prevents text from hitting the back button
         title: Column(
           mainAxisAlignment: MainAxisAlignment.end,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -211,13 +245,23 @@ class _DetailPageState extends State<DetailPage> {
               '$remainingTasks tasks',
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Color.fromARGB(255, 0, 0, 0), // 🔹 Forced White
+                fontSize: 18,
               ),
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 2),
             Text(
               'You have $remainingTasks tasks for today!',
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 10,
+                color: const Color.fromARGB(
+                  255,
+                  0,
+                  0,
+                  0,
+                ).withOpacity(0.7), // 🔹 Forced Light Grey/White
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ],
         ),
