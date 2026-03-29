@@ -12,7 +12,7 @@ class _DatePickerState extends State<DatePicker> {
     'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'
   ];
 
-  final List<String> dayList = ['24', '25', '26', '27', '28', '29', '30'];
+  final List<String> dayList = ['30', '31', '1', '2', '3', '4', '5'];
 
   int selected = 4;
 

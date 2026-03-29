@@ -288,7 +288,7 @@ class _DetailPageState extends State<DetailPage> {
                         labelText: "Description",
                       ),
                       enabled: !isUpdating,
-                    ),       
+                    ),
                     const SizedBox(height: 10),
 
                     // Status Dropdown
@@ -309,7 +309,16 @@ class _DetailPageState extends State<DetailPage> {
 
                     // 🔹 "Blocked By" Dropdown (The key addition)
                     DropdownButtonFormField<int>(
-                      value: selectedBlockedById,
+                      value:
+                          detailList
+                              .where((t) => t['id'] != item['id'])
+                              .any(
+                                (t) =>
+                                    int.tryParse(t['id'].toString()) ==
+                                    selectedBlockedById,
+                              )
+                          ? selectedBlockedById
+                          : null,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: "Blocked By (Parent Task)",
@@ -317,17 +326,22 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                       hint: const Text("None (Select Parent)"),
                       // Filter out the current task so it can't block itself
-                      items: detailList.where((t) => t['id'] != item['id']).map(
-                        (taskItem) {
-                          return DropdownMenuItem<int>(
-                            value: int.tryParse(taskItem['id'].toString()),
-                            child: Text(
-                              taskItem['title'] ?? "Untitled Task",
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        },
-                      ).toList(),
+                      items: detailList
+                          .where((t) => t['id'] != item['id'])
+                          .map((taskItem) {
+                            final id = int.tryParse(taskItem['id'].toString());
+                            if (id == null) return null;
+
+                            return DropdownMenuItem<int>(
+                              value: id,
+                              child: Text(
+                                taskItem['title'] ?? "Untitled Task",
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          })
+                          .whereType<DropdownMenuItem<int>>() // removes nulls
+                          .toList(),
                       onChanged: isUpdating
                           ? null
                           : (value) {
@@ -626,10 +640,17 @@ class _DetailPageState extends State<DetailPage> {
                     ),
                     const SizedBox(height: 10),
 
-                    // 🔹 FIXED: "Blocked By" Dropdown
+                    //FIXED: "Blocked By" Dropdown
                     DropdownButtonFormField<int>(
                       // Value must be the local variable we are tracking
-                      value: selectedBlockedById,
+                      value:
+                          detailList.any(
+                            (t) =>
+                                int.tryParse(t['id'].toString()) ==
+                                selectedBlockedById,
+                          )
+                          ? selectedBlockedById
+                          : null,
                       isExpanded: true,
                       decoration: const InputDecoration(
                         labelText: "Blocked By (Optional)",
@@ -637,16 +658,22 @@ class _DetailPageState extends State<DetailPage> {
                       ),
                       hint: const Text("Select a task"),
                       // Map your existing detailList to dropdown items
-                      items: detailList.map((taskItem) {
-                        return DropdownMenuItem<int>(
-                          // Safely parse the ID as an integer
-                          value: int.tryParse(taskItem['id'].toString()),
-                          child: Text(
-                            taskItem['title'] ?? "Untitled Task",
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        );
-                      }).toList(),
+                      items: detailList
+                          .where((t) => t['id'] != null)
+                          .map((taskItem) {
+                            final id = int.tryParse(taskItem['id'].toString());
+                            if (id == null) return null;
+
+                            return DropdownMenuItem<int>(
+                              value: id,
+                              child: Text(
+                                taskItem['title'] ?? "Untitled Task",
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            );
+                          })
+                          .whereType<DropdownMenuItem<int>>() // removes nulls
+                          .toList(),
                       onChanged: isAdding
                           ? null
                           : (value) {

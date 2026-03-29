@@ -50,7 +50,7 @@ class Task {
       ),
       Task(
         iconData: Icons.favorite_rounded,
-        title: "Work",
+        title: "Health",
         bgColor: kBlueLight,
         iconColor: kBlueDark,
         btnColor: kBlue,
