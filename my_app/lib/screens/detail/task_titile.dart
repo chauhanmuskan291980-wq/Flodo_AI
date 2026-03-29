@@ -10,55 +10,92 @@ class TaskTitle extends StatelessWidget {
     required this.onFilterChanged,
   });
 
+  Color _getFilterColor(String filter) {
+    switch (filter) {
+      case 'Done':
+        return Colors.green;
+      case 'In Progress':
+        return Colors.orange;
+      case 'Pending':
+        return Colors.red;
+      default:
+        return Colors.blueGrey;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 20),
+    final filterColor = _getFilterColor(selectedFilter);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Tasks',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
-              letterSpacing: 0.5,
-            ),
+          // 🔥 Title Section
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'Tasks',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.3,
+                ),
+              ),
+              SizedBox(height: 4),
+              Text(
+                'Manage your daily work',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+            ],
           ),
-          
-          // 🔹 Status Filter Dropdown 
+
+          // 🔥 Filter Chip Style (Modern)
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.08),
-              borderRadius: BorderRadius.circular(15),
+              color: filterColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: filterColor.withOpacity(0.3),
+              ),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: selectedFilter,
-                icon: const Icon(Icons.keyboard_arrow_down_outlined, size: 18, color: Colors.black),
+                icon: Icon(
+                  Icons.keyboard_arrow_down_rounded,
+                  size: 20,
+                  color: filterColor,
+                ),
                 style: TextStyle(
-                  color: Colors.grey[800],
+                  color: filterColor,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
-                // 🔹 Match the "Must-Have" Statuses from PDF 
+                dropdownColor: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+
                 items: ['All', 'Pending', 'In Progress', 'Done']
-                    .map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    onFilterChanged(newValue);
+                    .map((value) => DropdownMenuItem(
+                          value: value,
+                          child: Text(value),
+                        ))
+                    .toList(),
+
+                onChanged: (value) {
+                  if (value != null) {
+                    onFilterChanged(value);
                   }
                 },
               ),
             ),
-          )
+          ),
         ],
       ),
     );

@@ -51,8 +51,9 @@ class TaskTimeLine extends StatelessWidget {
                   child: Text(
                     detail['time'] ?? '',
                     style: TextStyle(
-                      color: Colors.grey.shade600,
-                      fontWeight: FontWeight.w500,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ),
@@ -74,25 +75,25 @@ class TaskTimeLine extends StatelessWidget {
 
   Widget _buildTimeline(Color color) {
     return SizedBox(
-      height: 80,
+      height: 90,
       width: 20,
       child: TimelineTile(
         alignment: TimelineAlign.manual,
-        lineXY: 0,
+        lineXY: 0.5,
         isFirst: false,
         isLast: false,
         indicatorStyle: IndicatorStyle(
-          indicatorXY: 0,
-          width: 15,
+          width: 16,
           indicator: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
               shape: BoxShape.circle,
-              border: Border.all(width: 5, color: color),
+              color: Colors.white,
+              border: Border.all(color: color, width: 3),
             ),
           ),
         ),
-        afterLineStyle: LineStyle(thickness: 2, color: color),
+        beforeLineStyle: LineStyle(color: color.withOpacity(0.3), thickness: 2),
+        afterLineStyle: LineStyle(color: color.withOpacity(0.3), thickness: 2),
       ),
     );
   }
@@ -118,81 +119,118 @@ class TaskTimeLine extends StatelessWidget {
       return const SizedBox(height: 80, width: 250);
     }
 
-    return Container(
-      width: 250,
-      padding: const EdgeInsets.all(12),
-      margin: const EdgeInsets.symmetric(vertical: 5),
+    final Color statusColor = _getStatusColor(status);
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      width: 260,
+      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.symmetric(vertical: 6),
       decoration: BoxDecoration(
-        // Use the bgColor from your API/Map if available, else a light blue
-        color: (detail['bgColor'] is String)
-            ? ApiService.hexToColor(detail['bgColor'])
-            : const Color(0xFFE3F2FD),
-        borderRadius: BorderRadius.circular(15),
+        color: Colors.white, // 🔥 clean white card
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(
+          color: statusColor.withOpacity(0.2), // subtle status border
+          width: 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 🔥 Row for Title + Action Buttons
+          // 🔥 Title + Actions Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+              // Left colored strip (status indicator)
+              Container(
+                width: 4,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: statusColor,
+                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
-              // Edit & Delete Buttons
+
+              const SizedBox(width: 10),
+
+              // Title + Slot
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      slot,
+                      style: TextStyle(
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // 🔥 Actions (clean icons)
               Row(
                 children: [
-                  GestureDetector(
+                  InkWell(
                     onTap: onEdit,
-                    child: const Icon(
-                      Icons.edit,
-                      size: 16,
-                      color: Colors.blueGrey,
+                    borderRadius: BorderRadius.circular(20),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.edit, size: 18, color: Colors.blue),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  GestureDetector(
+                  const SizedBox(width: 6),
+                  InkWell(
                     onTap: onDelete,
-                    child: const Icon(
-                      Icons.delete,
-                      size: 16,
-                      color: Colors.redAccent,
+                    borderRadius: BorderRadius.circular(20),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.delete, size: 18, color: Colors.red),
                     ),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 4),
 
-          // 🔥 Slot/Time Range
-          Text(
-            slot,
-            style: TextStyle(color: Colors.grey.shade700, fontSize: 12),
-          ),
+          const SizedBox(height: 10),
 
-          const SizedBox(height: 8),
-
-          // 🔥 Status Badge (Like your static data)
-          if (status != 'Empty')
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          // 🔥 Status Badge (Modern pill)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: _getStatusColor(status),
-                borderRadius: BorderRadius.circular(10),
+                color: statusColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
                 status,
-                style: const TextStyle(color: Colors.white, fontSize: 10),
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
+          ),
         ],
       ),
     );

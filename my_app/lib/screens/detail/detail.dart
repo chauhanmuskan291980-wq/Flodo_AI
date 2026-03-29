@@ -81,7 +81,7 @@ class _DetailPageState extends State<DetailPage> {
           );
 
           // 🔹 CRITICAL: Store these three things for instant UI updates
-          displayItem['id'] = task['id']; // The DB ID
+          displayItem['id'] = int.tryParse(task['id'].toString()); // The DB ID
           displayItem['subIndex'] = i; // Position in JSON
           displayItem['parentList'] = originalDescList; // The full JSON list
 
@@ -210,7 +210,8 @@ class _DetailPageState extends State<DetailPage> {
                             onDelete: () async {
                               final dynamic idValue = currentTask['id'];
                               if (idValue != null) {
-                                int taskId = idValue as int;
+                                int? taskId = int.tryParse(idValue.toString());
+                                if (taskId == null) return;
                                 final bool success =
                                     await ApiService.deletetask(taskId);
                                 if (success) {
@@ -225,7 +226,7 @@ class _DetailPageState extends State<DetailPage> {
                             onEdit: () {
                               // Find the original index in detailList if needed,
                               // or just pass the task data to your dialog
-                              _showEditDialog(context, index);
+                              _showEditDialog(context, currentTask);
                             },
                           ),
                         ),
@@ -238,9 +239,7 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  void _showEditDialog(BuildContext context, int index) {
-    final item = detailList[index];
-
+  void _showEditDialog(BuildContext context, Map<String, dynamic> item) {
     // Controllers for text fields
     TextEditingController timeController = TextEditingController(
       text: item['time'],
@@ -444,13 +443,21 @@ class _DetailPageState extends State<DetailPage> {
                             });
 
                             // UI Update
-                            setState(() {
-                              detailList[index] = {
-                                ...Map<String, dynamic>.from(item),
-                                ...updatedEntry,
-                                'parentList': fullList,
-                              };
-                            });
+setState(() {
+  final i = detailList.indexWhere(
+    (t) =>
+        t['id'] == item['id'] &&
+        t['subIndex'] == item['subIndex'],
+  );
+
+  if (i != -1) {
+    detailList[i] = {
+      ...Map<String, dynamic>.from(item),
+      ...updatedEntry,
+      'parentList': fullList,
+    };
+  }
+});
 
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
