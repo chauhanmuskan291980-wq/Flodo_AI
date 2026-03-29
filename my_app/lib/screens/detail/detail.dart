@@ -4,6 +4,7 @@ import 'package:my_app/services/api_service.dart';
 import 'package:my_app/screens/detail/date_picker.dart';
 import 'package:my_app/screens/detail/task_titile.dart';
 import 'package:my_app/screens/detail/task_time_line.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class DetailPage extends StatefulWidget {
   final Task task;
@@ -95,6 +96,43 @@ class _DetailPageState extends State<DetailPage> {
       debugPrint("LOADING ERROR: $e"); // 🔹 Prints error to console
       setState(() => isLoading = false);
     }
+  }
+
+  Future<void> _saveDraft({
+    required String title,
+    required String time,
+    required String slot,
+    required String status,
+    required int? blockedBy,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+
+    await prefs.setString('draft_title', title);
+    await prefs.setString('draft_time', time);
+    await prefs.setString('draft_slot', slot);
+    await prefs.setString('draft_status', status);
+    if (blockedBy != null) {
+      await prefs.setInt('draft_blocked_by', blockedBy);
+    } else {
+      await prefs.remove('draft_blocked_by');
+    }
+  }
+
+  Future<Map<String, dynamic>> _loadDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    return {
+      'title': prefs.getString('draft_title') ?? '',
+      'time': prefs.getString('draft_time') ?? '',
+      'slot': prefs.getString('draft_slot') ?? '',
+      'status': prefs.getString('draft_status') ?? 'Pending',
+      'blocked_by': prefs.getInt('draft_blocked_by'),
+    };
+  }
+
+  Future<void> _clearDraft() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 
   @override
@@ -539,7 +577,7 @@ class _DetailPageState extends State<DetailPage> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    'You have $remainingTasks tasks for today!',
+                    'You have $remainingTasks tasks In this week!',
                     style: TextStyle(
                       fontSize: 10,
                       color: const Color.fromARGB(
@@ -557,15 +595,36 @@ class _DetailPageState extends State<DetailPage> {
     );
   }
 
-  void _showAddTaskDialog(BuildContext context) {
-    TextEditingController titleController = TextEditingController();
-    TextEditingController timeController = TextEditingController();
-    TextEditingController slotController = TextEditingController();
+  void _showAddTaskDialog(BuildContext context) async {
+    final draft = await _loadDraft();
 
-    // Initialize variables outside the builder to maintain state
-    int? selectedBlockedById;
-    String selectedStatus = 'Pending';
+    TextEditingController titleController = TextEditingController(
+      text: draft['title'],
+    );
+
+    TextEditingController timeController = TextEditingController(
+      text: draft['time'],
+    );
+
+    TextEditingController slotController = TextEditingController(
+      text: draft['slot'],
+    );
+
+    int? selectedBlockedById = draft['blocked_by'];
+    String selectedStatus = draft['status'] ?? 'Pending';
+
     bool isAdding = false;
+
+    // 🔹 Helper to save draft everywhere
+    void saveDraft() {
+      _saveDraft(
+        title: titleController.text,
+        time: timeController.text,
+        slot: slotController.text,
+        status: selectedStatus,
+        blockedBy: selectedBlockedById,
+      );
+    }
 
     showDialog(
       context: context,
@@ -579,51 +638,59 @@ class _DetailPageState extends State<DetailPage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    // 🔹 Title
                     TextField(
                       controller: titleController,
                       decoration: const InputDecoration(labelText: "Title"),
                       enabled: !isAdding,
+                      onChanged: (_) => saveDraft(),
                     ),
-                    // 1. Change the controller to store the formatted date string
+
+                    // 🔹 Date
                     TextFormField(
-                      controller:
-                          timeController, // Use this for the display (e.g., "2026-03-29")
-                      readOnly: true, // Prevents keyboard from popping up
+                      controller: timeController,
+                      readOnly: true,
+                      enabled: !isAdding,
                       decoration: const InputDecoration(
                         labelText: "Due Date",
-                        suffixIcon: Icon(Icons.calendar_today), // Visual hint
+                        suffixIcon: Icon(Icons.calendar_today),
                       ),
                       onTap: isAdding
                           ? null
                           : () async {
-                              // 2. Open the Calendar picker
                               DateTime? pickedDate = await showDatePicker(
                                 context: context,
                                 initialDate: DateTime.now(),
-                                firstDate: DateTime(2025), // Set your range
+                                firstDate: DateTime(2025),
                                 lastDate: DateTime(2030),
                               );
 
-                              // 3. Format and update the controller
                               if (pickedDate != null) {
                                 setDialogState(() {
-                                  // You can format this however you like
                                   timeController.text =
                                       "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
                                 });
+                                saveDraft();
                               }
                             },
                     ),
+
+                    // 🔹 Description
                     TextField(
                       controller: slotController,
                       decoration: const InputDecoration(
                         labelText: "Description",
                       ),
                       enabled: !isAdding,
+                      onChanged: (_) => saveDraft(),
                     ),
+
                     const SizedBox(height: 10),
+
+                    // 🔹 Status
                     DropdownButtonFormField<String>(
                       value: selectedStatus,
+                      decoration: const InputDecoration(labelText: "Status"),
                       items: ['Pending', 'In Progress', 'Done']
                           .map(
                             (status) => DropdownMenuItem(
@@ -634,15 +701,18 @@ class _DetailPageState extends State<DetailPage> {
                           .toList(),
                       onChanged: isAdding
                           ? null
-                          : (value) =>
-                                setDialogState(() => selectedStatus = value!),
-                      decoration: const InputDecoration(labelText: "Status"),
+                          : (value) {
+                              setDialogState(() {
+                                selectedStatus = value!;
+                              });
+                              saveDraft();
+                            },
                     ),
+
                     const SizedBox(height: 10),
 
-                    //FIXED: "Blocked By" Dropdown
+                    // 🔹 Blocked By (FIXED CRASH)
                     DropdownButtonFormField<int>(
-                      // Value must be the local variable we are tracking
                       value:
                           detailList.any(
                             (t) =>
@@ -657,7 +727,6 @@ class _DetailPageState extends State<DetailPage> {
                         prefixIcon: Icon(Icons.lock_outline, size: 20),
                       ),
                       hint: const Text("Select a task"),
-                      // Map your existing detailList to dropdown items
                       items: detailList
                           .where((t) => t['id'] != null)
                           .map((taskItem) {
@@ -672,23 +741,34 @@ class _DetailPageState extends State<DetailPage> {
                               ),
                             );
                           })
-                          .whereType<DropdownMenuItem<int>>() // removes nulls
+                          .whereType<DropdownMenuItem<int>>()
                           .toList(),
                       onChanged: isAdding
                           ? null
                           : (value) {
-                              // Update the local dialog state
-                              setDialogState(() => selectedBlockedById = value);
+                              setDialogState(() {
+                                selectedBlockedById = value;
+                              });
+                              saveDraft();
                             },
                     ),
                   ],
                 ),
               ),
+
               actions: [
+                // 🔹 Cancel
                 TextButton(
-                  onPressed: isAdding ? null : () => Navigator.pop(context),
+                  onPressed: isAdding
+                      ? null
+                      : () {
+                          Navigator.pop(context);
+                          // ❌ DO NOT clear draft here
+                        },
                   child: const Text("Cancel"),
                 ),
+
+                // 🔹 Add Button
                 ElevatedButton(
                   onPressed: isAdding
                       ? null
@@ -696,8 +776,6 @@ class _DetailPageState extends State<DetailPage> {
                           setDialogState(() => isAdding = true);
 
                           try {
-                            await Future.delayed(const Duration(seconds: 2));
-
                             final Map<String, dynamic> newTaskData = {
                               'time': timeController.text,
                               'title': titleController.text,
@@ -717,6 +795,9 @@ class _DetailPageState extends State<DetailPage> {
                             setState(() {
                               detailList.add(newTaskData);
                             });
+
+                            // ✅ CLEAR DRAFT AFTER SUCCESS
+                            await _clearDraft();
 
                             if (context.mounted) Navigator.pop(context);
                           } catch (e) {
