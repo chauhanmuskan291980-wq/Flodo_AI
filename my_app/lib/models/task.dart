@@ -12,7 +12,8 @@ class Task {
   num? left;
   num? done;
   List<Map<String, dynamic>>? desc;
-  bool? isLast;
+  bool isLast;
+
   Task({
     this.id,
     this.iconData,
@@ -26,6 +27,7 @@ class Task {
     this.desc,
     this.isLast = false,
   });
+
   static List<Task> generateTask() {
     return [
       Task(

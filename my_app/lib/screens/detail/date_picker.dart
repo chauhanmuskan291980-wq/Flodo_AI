@@ -19,51 +19,58 @@ class _DatePickerState extends State<DatePicker> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 100,
+      height: 110,
       padding: const EdgeInsets.symmetric(vertical: 10),
-      decoration: const BoxDecoration(
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-      ),
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 20),
         itemCount: weekList.length,
-        separatorBuilder: (_, index) => const SizedBox(width: 5),
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          return GestureDetector(
+          final bool isSelected = selected == index;
+
+          return InkWell(
+            borderRadius: BorderRadius.circular(20),
             onTap: () {
-              setState(() {
-                selected = index;
-              });
+              setState(() => selected = index);
             },
-            child: Container(
-              padding: const EdgeInsets.all(10),
-              margin: EdgeInsets.symmetric(horizontal: 4),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              width: 65,
               decoration: BoxDecoration(
+                color: isSelected
+                    ? const Color(0xFF4F46E5) // 🔥 Premium Indigo
+                    : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(20),
-                color: selected == index
-                    ? Colors.grey.withOpacity(0.2)
-                    : Colors.transparent,
+                boxShadow: isSelected
+                    ? [
+                        BoxShadow(
+                          color: const Color(0xFF4F46E5).withOpacity(0.4),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                    : [],
               ),
+              padding: const EdgeInsets.symmetric(vertical: 12),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
                     weekList[index],
                     style: TextStyle(
-                      color: selected == index
-                          ? Colors.black
-                          : Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isSelected ? Colors.white70 : Colors.grey,
                     ),
                   ),
-                  const SizedBox(height: 5),
+                  const SizedBox(height: 6),
                   Text(
                     dayList[index],
-                    style: const TextStyle(
-                      fontSize: 16,
+                    style: TextStyle(
+                      fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: isSelected ? Colors.white : Colors.black,
                     ),
                   ),
                 ],
