@@ -35,25 +35,25 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   bool _isTaskLocked(Map<String, dynamic> task) {
-  final blockedById = task['blocked_by'];
-  
-  // 1. If no blocker, it's not locked
-  if (blockedById == null) return false;
+    final blockedById = task['blocked_by'];
 
-  // 2. Find the parent task. 
-  // We use cast to ensure the return type matches exactly what Dart expects.
-  final parentTask = detailList.firstWhere(
-    (t) => t['id'] == blockedById,
-    orElse: () => <String, dynamic>{}, // Returns an empty map instead of null
-  );
+    // 1. If no blocker, it's not locked
+    if (blockedById == null) return false;
 
-  // 3. Check if we actually found a task and if its status is NOT Done
-  if (parentTask.isEmpty || parentTask['status'] != 'Done') {
-    return true;
+    // 2. Find the parent task.
+    // We use cast to ensure the return type matches exactly what Dart expects.
+    final parentTask = detailList.firstWhere(
+      (t) => t['id'] == blockedById,
+      orElse: () => <String, dynamic>{}, // Returns an empty map instead of null
+    );
+
+    // 3. Check if we actually found a task and if its status is NOT Done
+    if (parentTask.isEmpty || parentTask['status'] != 'Done') {
+      return true;
+    }
+
+    return false;
   }
-
-  return false;
-}
 
   TextEditingController searchController = TextEditingController();
   bool isSearching = false;
@@ -146,204 +146,287 @@ class _DetailPageState extends State<DetailPage> {
                   ),
                 )
               : // 🔹 Inside your SliverList in detail.dart
-              SliverList(
-  delegate: SliverChildBuilderDelegate(
-    (context, index) {
-      // Use filteredList for display, but detailList for logic if needed
-      final currentTask = filteredList[index];
-      bool isLocked = _isTaskLocked(currentTask);
+                SliverList(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    // Use filteredList for display, but detailList for logic if needed
+                    final currentTask = filteredList[index];
+                    bool isLocked = _isTaskLocked(currentTask);
 
-      return IgnorePointer(
-        ignoring: isLocked,
-        child: ColorFiltered(
-          colorFilter: isLocked
-              ? const ColorFilter.mode(Colors.grey, BlendMode.saturation)
-              : const ColorFilter.mode(Colors.transparent, BlendMode.multiply),
-          child: Opacity(
-            opacity: isLocked ? 0.5 : 1.0,
-            child: TaskTimeLine(
-              currentTask,
-              index,
-              onDelete: () async {
-                final dynamic idValue = currentTask['id'];
-                if (idValue != null) {
-                  int taskId = idValue as int;
-                  final bool success = await ApiService.deletetask(taskId);
-                  if (success) {
-                    setState(() {
-                      detailList.removeWhere((t) => t['id'] == taskId);
-                    });
-                  }
-                }
-              },
-              onEdit: () {
-                // Find the original index in detailList if needed, 
-                // or just pass the task data to your dialog
-                _showEditDialog(context, index);
-              },
-            ),
-          ),
-        ),
-      );
-    },
-    childCount: filteredList.length,
-  ),
-),
+                    return IgnorePointer(
+                      ignoring: isLocked,
+                      child: ColorFiltered(
+                        colorFilter: isLocked
+                            ? const ColorFilter.mode(
+                                Colors.grey,
+                                BlendMode.saturation,
+                              )
+                            : const ColorFilter.mode(
+                                Colors.transparent,
+                                BlendMode.multiply,
+                              ),
+                        child: Opacity(
+                          opacity: isLocked ? 0.5 : 1.0,
+                          child: TaskTimeLine(
+                            currentTask,
+                            index,
+                            onDelete: () async {
+                              final dynamic idValue = currentTask['id'];
+                              if (idValue != null) {
+                                int taskId = idValue as int;
+                                final bool success =
+                                    await ApiService.deletetask(taskId);
+                                if (success) {
+                                  setState(() {
+                                    detailList.removeWhere(
+                                      (t) => t['id'] == taskId,
+                                    );
+                                  });
+                                }
+                              }
+                            },
+                            onEdit: () {
+                              // Find the original index in detailList if needed,
+                              // or just pass the task data to your dialog
+                              _showEditDialog(context, index);
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  }, childCount: filteredList.length),
+                ),
         ],
       ),
     );
   }
 
   void _showEditDialog(BuildContext context, int index) {
-  final item = detailList[index];
-  
-  // Controllers for text fields
-  TextEditingController timeController = TextEditingController(text: item['time']);
-  TextEditingController titleController = TextEditingController(text: item['title']);
-  TextEditingController slotController = TextEditingController(text: item['slot']);
-  
-  // State variables for the dialog
-  String selectedStatus = item['status'] ?? 'Pending';
-  
-  // 🔹 Get the existing blocked_by ID (safely cast to int)
-  int? selectedBlockedById = item['blocked_by'] != null 
-      ? int.tryParse(item['blocked_by'].toString()) 
-      : null;
+    final item = detailList[index];
 
-  bool isUpdating = false;
+    // Controllers for text fields
+    TextEditingController timeController = TextEditingController(
+      text: item['time'],
+    );
+    TextEditingController titleController = TextEditingController(
+      text: item['title'],
+    );
+    TextEditingController slotController = TextEditingController(
+      text: item['slot'],
+    );
 
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) {
-      return StatefulBuilder(
-        builder: (context, setDialogState) {
-          return AlertDialog(
-            title: const Text("Edit Task"),
-            content: SingleChildScrollView( // Added scroll to prevent overflow with dropdown
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextField(
-                    controller: timeController,
-                    decoration: const InputDecoration(labelText: "Time"),
-                    enabled: !isUpdating,
-                  ),
-                  TextField(
-                    controller: titleController,
-                    decoration: const InputDecoration(labelText: "Title"),
-                    enabled: !isUpdating,
-                  ),
-                  TextField(
-                    controller: slotController,
-                    decoration: const InputDecoration(labelText: "Slot"),
-                    enabled: !isUpdating,
-                  ),
-                  const SizedBox(height: 10),
-                  
-                  // Status Dropdown
-                  DropdownButtonFormField<String>(
-                    value: selectedStatus,
-                    decoration: const InputDecoration(labelText: "Status"),
-                    items: ['Pending', 'In Progress', 'Done']
-                        .map((s) => DropdownMenuItem(value: s, child: Text(s)))
-                        .toList(),
-                    onChanged: isUpdating ? null : (v) => setDialogState(() => selectedStatus = v!),
-                  ),
-                  
-                  const SizedBox(height: 10),
+    // State variables for the dialog
+    String selectedStatus = item['status'] ?? 'Pending';
 
-                  // 🔹 "Blocked By" Dropdown (The key addition)
-                  DropdownButtonFormField<int>(
-                    value: selectedBlockedById,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      labelText: "Blocked By (Parent Task)",
-                      prefixIcon: Icon(Icons.lock_outline, size: 20),
+    // 🔹 Get the existing blocked_by ID (safely cast to int)
+    int? selectedBlockedById = item['blocked_by'] != null
+        ? int.tryParse(item['blocked_by'].toString())
+        : null;
+
+    bool isUpdating = false;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text("Edit Task"),
+              content: SingleChildScrollView(
+                // Added scroll to prevent overflow with dropdown
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: titleController,
+                      decoration: const InputDecoration(labelText: "Title"),
+                      enabled: !isUpdating,
                     ),
-                    hint: const Text("None (Select Parent)"),
-                    // Filter out the current task so it can't block itself
-                    items: detailList.where((t) => t['id'] != item['id']).map((taskItem) {
-                      return DropdownMenuItem<int>(
-                        value: int.tryParse(taskItem['id'].toString()),
-                        child: Text(
-                          taskItem['title'] ?? "Untitled Task",
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: isUpdating ? null : (value) {
-                      setDialogState(() => selectedBlockedById = value);
-                    },
-                  ),
-                ],
+
+                    // ✅ DATE FIELD (fixed)
+                    TextFormField(
+                      controller: timeController,
+                      readOnly: true,
+                      enabled: !isUpdating,
+                      decoration: const InputDecoration(
+                        labelText: "Due Date",
+                        suffixIcon: Icon(Icons.calendar_today),
+                      ),
+                      onTap: !isUpdating
+                          ? () async {
+                              DateTime initialDate;
+
+                              // ✅ Parse existing date safely
+                              try {
+                                initialDate = DateTime.parse(
+                                  timeController.text,
+                                );
+                              } catch (e) {
+                                initialDate = DateTime.now();
+                              }
+
+                              DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: initialDate,
+                                firstDate: DateTime(2025),
+                                lastDate: DateTime(2030),
+                              );
+
+                              if (pickedDate != null) {
+                                setDialogState(() {
+                                  timeController.text =
+                                      "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                                });
+                              }
+                            }
+                          : null,
+                    ),
+
+                    TextField(
+                      controller: slotController,
+                      decoration: const InputDecoration(
+                        labelText: "Description",
+                      ),
+                      enabled: !isUpdating,
+                    ),       
+                    const SizedBox(height: 10),
+
+                    // Status Dropdown
+                    DropdownButtonFormField<String>(
+                      value: selectedStatus,
+                      decoration: const InputDecoration(labelText: "Status"),
+                      items: ['Pending', 'In Progress', 'Done']
+                          .map(
+                            (s) => DropdownMenuItem(value: s, child: Text(s)),
+                          )
+                          .toList(),
+                      onChanged: isUpdating
+                          ? null
+                          : (v) => setDialogState(() => selectedStatus = v!),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // 🔹 "Blocked By" Dropdown (The key addition)
+                    DropdownButtonFormField<int>(
+                      value: selectedBlockedById,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: "Blocked By (Parent Task)",
+                        prefixIcon: Icon(Icons.lock_outline, size: 20),
+                      ),
+                      hint: const Text("None (Select Parent)"),
+                      // Filter out the current task so it can't block itself
+                      items: detailList.where((t) => t['id'] != item['id']).map(
+                        (taskItem) {
+                          return DropdownMenuItem<int>(
+                            value: int.tryParse(taskItem['id'].toString()),
+                            child: Text(
+                              taskItem['title'] ?? "Untitled Task",
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        },
+                      ).toList(),
+                      onChanged: isUpdating
+                          ? null
+                          : (value) {
+                              setDialogState(() => selectedBlockedById = value);
+                            },
+                    ),
+                  ],
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: isUpdating ? null : () => Navigator.pop(context),
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: isUpdating ? null : () async {
-                  setDialogState(() => isUpdating = true);
-                  try {
-                    final int taskId = item['id'] as int;
-                    final int subIndex = item['subIndex'] as int;
+              actions: [
+                TextButton(
+                  onPressed: isUpdating ? null : () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+                ElevatedButton(
+                  onPressed: isUpdating
+                      ? null
+                      : () async {
+                          setDialogState(() => isUpdating = true);
+                          try {
+                            final int? taskId = item['id'] is int
+                                ? item['id']
+                                : int.tryParse(item['id']?.toString() ?? '');
 
-                    // Prepare the full list for the "desc" field update
-                    List<Map<String, dynamic>> fullList = (item['parentList'] as List)
-                        .map((e) => Map<String, dynamic>.from(e as Map))
-                        .toList();
+                            final int? subIndex = item['subIndex'] is int
+                                ? item['subIndex']
+                                : int.tryParse(
+                                    item['subIndex']?.toString() ?? '',
+                                  );
 
-                    final Map<String, dynamic> updatedEntry = {
-                      'time': timeController.text,
-                      'title': titleController.text,
-                      'slot': slotController.text,
-                      'status': selectedStatus,
-                      'blocked_by': selectedBlockedById, // 🔹 Include the ID here
-                    };
+                            if (taskId == null || subIndex == null) {
+                              throw Exception(
+                                "Invalid taskId or subIndex (null)",
+                              );
+                            }
 
-                    fullList[subIndex] = updatedEntry;
+                            // Prepare the full list for the "desc" field update
+                            List<Map<String, dynamic>> fullList =
+                                (item['parentList'] as List)
+                                    .map(
+                                      (e) =>
+                                          Map<String, dynamic>.from(e as Map),
+                                    )
+                                    .toList();
 
-                    // API Update
-                    await ApiService.updatetask(taskId, {
-                      "desc": fullList,
-                      // If your backend stores blocked_by at the top level, add it here too:
-                      "blocked_by": selectedBlockedById, 
-                    });
+                            final Map<String, dynamic> updatedEntry = {
+                              'time': timeController.text,
+                              'title': titleController.text,
+                              'slot': slotController.text,
+                              'status': selectedStatus,
+                              'blocked_by':
+                                  selectedBlockedById, // 🔹 Include the ID here
+                            };
 
-                    // UI Update
-                    setState(() {
-                      detailList[index] = {
-                        ...Map<String, dynamic>.from(item),
-                        ...updatedEntry,
-                        'parentList': fullList,
-                      };
-                    });
+                            fullList[subIndex] = updatedEntry;
 
-                    if (context.mounted) Navigator.pop(context);
-                  } catch (e) {
-                    debugPrint("UPDATE FAILED: $e");
-                    if (context.mounted) {
-                      setDialogState(() => isUpdating = false);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error: $e")),
-                      );
-                    }
-                  }
-                },
-                child: isUpdating 
-                  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) 
-                  : const Text("Save"),
-              ),
-            ],
-          );
-        },
-      );
-    },
-  );
-}
+                            // API Update
+                            await ApiService.updatetask(taskId, {
+                              "desc": fullList,
+                              // If your backend stores blocked_by at the top level, add it here too:
+                              "blocked_by": selectedBlockedById,
+                            });
+
+                            // UI Update
+                            setState(() {
+                              detailList[index] = {
+                                ...Map<String, dynamic>.from(item),
+                                ...updatedEntry,
+                                'parentList': fullList,
+                              };
+                            });
+
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            debugPrint("UPDATE FAILED: $e");
+                            if (context.mounted) {
+                              setDialogState(() => isUpdating = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text("Error: $e")),
+                              );
+                            }
+                          }
+                        },
+                  child: isUpdating
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text("Save"),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
   // 🔹 AppBar
   Widget _buildAppBar(BuildContext context) {
     int totalTasks = detailList
@@ -469,7 +552,6 @@ class _DetailPageState extends State<DetailPage> {
     int? selectedBlockedById;
     String selectedStatus = 'Pending';
     bool isAdding = false;
-     
 
     showDialog(
       context: context,
@@ -488,14 +570,41 @@ class _DetailPageState extends State<DetailPage> {
                       decoration: const InputDecoration(labelText: "Title"),
                       enabled: !isAdding,
                     ),
-                    TextField(
-                      controller: timeController,
-                      decoration: const InputDecoration(labelText: "Time"),
-                      enabled: !isAdding,
+                    // 1. Change the controller to store the formatted date string
+                    TextFormField(
+                      controller:
+                          timeController, // Use this for the display (e.g., "2026-03-29")
+                      readOnly: true, // Prevents keyboard from popping up
+                      decoration: const InputDecoration(
+                        labelText: "Due Date",
+                        suffixIcon: Icon(Icons.calendar_today), // Visual hint
+                      ),
+                      onTap: isAdding
+                          ? null
+                          : () async {
+                              // 2. Open the Calendar picker
+                              DateTime? pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: DateTime.now(),
+                                firstDate: DateTime(2025), // Set your range
+                                lastDate: DateTime(2030),
+                              );
+
+                              // 3. Format and update the controller
+                              if (pickedDate != null) {
+                                setDialogState(() {
+                                  // You can format this however you like
+                                  timeController.text =
+                                      "${pickedDate.year}-${pickedDate.month.toString().padLeft(2, '0')}-${pickedDate.day.toString().padLeft(2, '0')}";
+                                });
+                              }
+                            },
                     ),
                     TextField(
                       controller: slotController,
-                      decoration: const InputDecoration(labelText: "Slot"),
+                      decoration: const InputDecoration(
+                        labelText: "Description",
+                      ),
                       enabled: !isAdding,
                     ),
                     const SizedBox(height: 10),
