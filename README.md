@@ -61,8 +61,11 @@ This project was developed as part of the **Flodo AI Take-Home Assignment**.
 ### 🏠 Home Screen
 <img src="Features/home_screen.png" width="300"/>
 
+### 📖 Read Task
+<img src="Features/Read_task.png" width="300"/>
+
 ### ➕ Add Task
-<img src="Features/add_task.png" width="300"/>
+<img src="Features/add_new_task.png" width="300"/>
 
 ### ✏️ Edit Task
 <img src="Features/edit_task.png" width="300"/>
@@ -77,7 +80,7 @@ This project was developed as part of the **Flodo AI Take-Home Assignment**.
 <img src="Features/block_task.png" width="300"/>
 
 ### 🔓 Unblocked After Parent Done
-<img src="Features/unblock_task.png" width="300"/>
+<img src="Features/unblock_after.png" width="300"/>
 
 ---
 
