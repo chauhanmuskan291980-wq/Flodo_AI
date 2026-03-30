@@ -234,27 +234,55 @@ http://10.0.2.2:8000
 
 ---
 
-## ❗ Troubleshooting
+## 🧠 Key Technical Decisions
 
-### Flutter Issues
-
-```bash
-flutter doctor
-```
-
----
-
-### SharedPreferences Error
-
-```bash
-flutter clean
-flutter pub get
-flutter run
-```
+- ⚡ Used **FastAPI** for high-performance backend  
+- 🔗 Implemented **task dependency logic**  
+- 💾 Used **SharedPreferences** for draft persistence  
+- 🛠️ Handled **Flutter Dropdown edge cases**  
+- ⏳ Simulated API delays for better UX  
 
 ---
 
-### Backend Not Connecting
+## 🤖 AI Usage Report
 
-- Ensure FastAPI server is running
-- Check correct API URL in Flutter
+### ✅ Helpful Prompts
+- "Flutter DropdownButtonFormField error fix"
+- "FastAPI CRUD with PostgreSQL"
+- "Save form draft using SharedPreferences"
+
+### ❌ Issues Faced & Fixes
+
+- Dropdown crash due to invalid value  
+  ✔ Fixed by validating selected value  
+
+- SharedPreferences error  
+  ✔ Fixed using:
+  ```bash
+  flutter clean
+  flutter pub get
+  ```
+
+---
+
+## 🚀 Future Improvements
+
+- 🔄 Drag & Drop Task Ordering  
+- ⏱️ Recurring Tasks  
+- 🎨 Improved UI Animations  
+- 🔔 Notifications  
+
+---
+
+## 🎥 Demo Video
+
+👉 Add your demo video link here  
+
+---
+
+## 👨‍💻 Author
+
+**Muskan Chauhan**  
+💼 Flutter Developer | Full-Stack Enthusiast  
+
+---
