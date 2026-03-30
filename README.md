@@ -59,10 +59,10 @@ This project was developed as part of the **Flodo AI Take-Home Assignment**.
 ## 🖼️ Screenshots
 
 ### 🏠 Home Screen
-<img src="Features/home_screen.png" width="300"/>
+<img src="Features/home_page.png" width="300"/>
 
 ### 📖 Read Task
-<img src="Features/Read_task.png" width="300"/>
+<img src="Features/read_task.png" width="300"/>
 
 ### ➕ Add Task
 <img src="Features/add_new_task.png" width="300"/>
