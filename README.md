@@ -77,7 +77,7 @@ This project was developed as part of the **Flodo AI Take-Home Assignment**.
 <img src="Features/filter_status.png" width="300"/>
 
 ### 🔒 Block Task
-<img src="Features/block_task.png" width="300"/>
+<img src="Features/block_task" width="300"/>
 
 ### 🔓 Unblocked After Parent Done
 <img src="Features/unblock_after.png" width="300"/>
