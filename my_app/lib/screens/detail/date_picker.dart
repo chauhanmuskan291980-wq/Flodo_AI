@@ -14,7 +14,7 @@ class _DatePickerState extends State<DatePicker> {
 
   final List<String> dayList = ['30', '31', '1', '2', '3', '4', '5'];
 
-  int selected = 1;
+  int selected = 2;
 
   @override
   Widget build(BuildContext context) {

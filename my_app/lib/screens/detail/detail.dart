@@ -171,13 +171,13 @@ class _DetailPageState extends State<DetailPage> {
           ),
 
           // 🔹 Task List / Empty State
-          (detailList.isEmpty)
+          (filteredList.isEmpty)
               ? SliverFillRemaining(
                   child: Container(
                     color: Colors.white,
                     child: const Center(
                       child: Text(
-                        'No Task today',
+                        'No matching tasks found',
                         style: TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ),
