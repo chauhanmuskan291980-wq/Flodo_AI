@@ -280,7 +280,7 @@ class _DetailPageState extends State<DetailPage> {
                       enabled: !isUpdating,
                     ),
 
-                    // ✅ DATE FIELD (fixed)
+                    //  DATE FIELD (fixed)
                     TextFormField(
                       controller: timeController,
                       readOnly: true,
@@ -293,7 +293,7 @@ class _DetailPageState extends State<DetailPage> {
                           ? () async {
                               DateTime initialDate;
 
-                              // ✅ Parse existing date safely
+                              //  Parse existing date safely
                               try {
                                 initialDate = DateTime.parse(
                                   timeController.text,
