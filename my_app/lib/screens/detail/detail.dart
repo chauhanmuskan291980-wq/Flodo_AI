@@ -770,7 +770,7 @@ setState(() {
                       ? null
                       : () {
                           Navigator.pop(context);
-                          // ❌ DO NOT clear draft here
+                          //  DO NOT clear draft here
                         },
                   child: const Text("Cancel"),
                 ),
@@ -803,7 +803,7 @@ setState(() {
                               detailList.add(newTaskData);
                             });
 
-                            // ✅ CLEAR DRAFT AFTER SUCCESS
+                            //  CLEAR DRAFT AFTER SUCCESS
                             await _clearDraft();
 
                             if (context.mounted) Navigator.pop(context);
